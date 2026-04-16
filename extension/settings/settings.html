@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>АнтиФиш — Настройки</title>
+    <link rel="stylesheet" href="settings.css">
+</head>
+<body>
+    <div class="page">
+
+        <!-- Шапка -->
+        <header class="header">
+            <div class="header-inner">
+                <div class="logo">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                    </svg>
+                </div>
+                <div>
+                    <h1 class="header-title">АнтиФиш</h1>
+                    <p class="header-sub">Настройки расширения</p>
+                </div>
+                <div class="header-spacer"></div>
+                <div class="plan-badge" id="planBadge">Бесплатный</div>
+            </div>
+        </header>
+
+        <main class="content">
+
+            <!-- Статус соединения -->
+            <section class="card" id="statusCard">
+                <h2 class="section-title">
+                    <span class="section-icon">📡</span>
+                    Состояние защиты
+                </h2>
+                <div class="status-grid">
+                    <div class="status-item">
+                        <div class="status-dot" id="connDot"></div>
+                        <div>
+                            <div class="status-label">Сервер API</div>
+                            <div class="status-val" id="connStatus">Проверка…</div>
+                        </div>
+                    </div>
+                    <div class="status-item">
+                        <div class="status-dot" id="modelDot"></div>
+                        <div>
+                            <div class="status-label">ML-модель</div>
+                            <div class="status-val" id="modelStatus">—</div>
+                        </div>
+                    </div>
+                    <div class="status-item">
+                        <div class="status-dot" id="blDot"></div>
+                        <div>
+                            <div class="status-label">Чёрный список</div>
+                            <div class="status-val" id="blStatus">—</div>
+                        </div>
+                    </div>
+                    <div class="status-item">
+                        <div class="status-dot green"></div>
+                        <div>
+                            <div class="status-label">Расширение</div>
+                            <div class="status-val">Активно</div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Соединение -->
+            <section class="card">
+                <h2 class="section-title">
+                    <span class="section-icon">🔗</span>
+                    Подключение к серверу
+                </h2>
+
+                <div class="field">
+                    <label class="label" for="apiUrl">URL API-сервера</label>
+                    <div class="input-row">
+                        <input class="input" type="url" id="apiUrl"
+                               placeholder="http://localhost:8787"
+                               spellcheck="false">
+                        <button class="btn btn-secondary" id="testConn">Проверить</button>
+                    </div>
+                    <p class="hint">
+                        Адрес сервера обнаружения фишинга. Для локального запуска —
+                        <code>http://localhost:8787</code>.
+                    </p>
+                </div>
+
+                <div class="field">
+                    <label class="label" for="apiKey">API-ключ <span class="optional">(необязательно)</span></label>
+                    <div class="input-row">
+                        <input class="input" type="password" id="apiKey"
+                               placeholder="Оставьте пустым, если авторизация отключена"
+                               autocomplete="off">
+                        <button class="btn btn-icon" id="toggleKey" title="Показать/скрыть ключ">
+                            <svg id="eyeIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18">
+                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
+                            </svg>
+                        </button>
+                    </div>
+                    <p class="hint">Совпадает со значением <code>ANTIPHISH_API_KEY</code> на сервере.</p>
+                </div>
+            </section>
+
+            <!-- Обнаружение -->
+            <section class="card">
+                <h2 class="section-title">
+                    <span class="section-icon">🎯</span>
+                    Параметры обнаружения
+                </h2>
+
+                <div class="field">
+                    <label class="label">
+                        Чувствительность
+                        <span class="badge-val" id="sensitivityVal">65%</span>
+                    </label>
+                    <input type="range" class="slider" id="sensitivity"
+                           min="50" max="90" step="5" value="65">
+                    <div class="slider-labels">
+                        <span>Меньше блокировок</span>
+                        <span>Больше блокировок</span>
+                    </div>
+                    <p class="hint">
+                        Порог вероятности фишинга. При <strong>65%</strong> достигается оптимальный баланс
+                        точности (97%) и ложных срабатываний. Повышение снижает ложные блокировки,
+                        понижение — повышает обнаружение новых угроз.
+                    </p>
+                </div>
+
+                <div class="field">
+                    <label class="label">Режим проверки</label>
+                    <div class="radio-group">
+                        <label class="radio">
+                            <input type="radio" name="checkMode" value="auto" checked>
+                            <span class="radio-mark"></span>
+                            <div>
+                                <strong>Автоматический</strong>
+                                <p class="hint" style="margin:0">Проверка при каждом переходе на сайт</p>
+                            </div>
+                        </label>
+                        <label class="radio">
+                            <input type="radio" name="checkMode" value="manual">
+                            <span class="radio-mark"></span>
+                            <div>
+                                <strong>Ручной</strong>
+                                <p class="hint" style="margin:0">Только по кнопке в попапе</p>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Уведомления -->
+            <section class="card">
+                <h2 class="section-title">
+                    <span class="section-icon">🔔</span>
+                    Уведомления
+                </h2>
+                <div class="toggle-row">
+                    <div>
+                        <div class="toggle-label">Уведомления браузера</div>
+                        <div class="toggle-desc">Показывать всплывающее уведомление при блокировке</div>
+                    </div>
+                    <label class="toggle">
+                        <input type="checkbox" id="notifEnabled" checked>
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
+                <div class="toggle-row">
+                    <div>
+                        <div class="toggle-label">Предупреждение на ссылках</div>
+                        <div class="toggle-desc">Показывать предупреждение при наведении на опасную ссылку</div>
+                    </div>
+                    <label class="toggle">
+                        <input type="checkbox" id="linkWarning" checked>
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
+            </section>
+
+            <!-- Внешний вид -->
+            <section class="card">
+                <h2 class="section-title">
+                    <span class="section-icon">🎨</span>
+                    Внешний вид
+                </h2>
+                <div class="toggle-row">
+                    <div>
+                        <div class="toggle-label">Тёмная тема</div>
+                        <div class="toggle-desc">Тёмный фон в попапе и страницах расширения</div>
+                    </div>
+                    <label class="toggle">
+                        <input type="checkbox" id="darkMode">
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
+            </section>
+
+            <!-- Премиум -->
+            <section class="card" id="premiumCard">
+                <h2 class="section-title">
+                    <span class="section-icon">⭐</span>
+                    Премиум-план
+                </h2>
+
+                <div class="premium-box" id="premiumBox">
+                    <div class="premium-icon">🔒</div>
+                    <div class="premium-text">
+                        <strong>Разблокируйте полную защиту</strong>
+                        <p>Анализ содержимого страниц, расширенная статистика, приоритетные обновления базы угроз.</p>
+                    </div>
+                </div>
+
+                <div class="field" id="licenseField">
+                    <label class="label" for="licenseKey">Лицензионный ключ</label>
+                    <div class="input-row">
+                        <input class="input" type="text" id="licenseKey"
+                               placeholder="ANTIPHISH-XXXX-XXXX-XXXX"
+                               autocomplete="off" spellcheck="false">
+                        <button class="btn btn-primary" id="activateBtn">Активировать</button>
+                    </div>
+                    <div class="license-status" id="licenseStatus"></div>
+                </div>
+            </section>
+
+            <!-- Данные -->
+            <section class="card">
+                <h2 class="section-title">
+                    <span class="section-icon">📊</span>
+                    Данные и статистика
+                </h2>
+                <div class="stats-mini" id="statsMini">
+                    <div class="stats-mini-item">
+                        <span class="stats-mini-val" id="smTotal">—</span>
+                        <span class="stats-mini-lbl">Всего проверок</span>
+                    </div>
+                    <div class="stats-mini-item">
+                        <span class="stats-mini-val danger" id="smBlocked">—</span>
+                        <span class="stats-mini-lbl">Заблокировано</span>
+                    </div>
+                    <div class="stats-mini-item">
+                        <span class="stats-mini-val safe" id="smSafe">—</span>
+                        <span class="stats-mini-lbl">Безопасных</span>
+                    </div>
+                </div>
+                <div class="btn-group">
+                    <button class="btn btn-secondary" id="resetStatsBtn">
+                        Сбросить статистику
+                    </button>
+                </div>
+            </section>
+
+            <!-- О расширении -->
+            <section class="card card-about">
+                <div class="about-row">
+                    <div class="about-logo">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                        </svg>
+                    </div>
+                    <div>
+                        <div class="about-name">АнтиФиш <span id="extVersion">v1.1.0</span></div>
+                        <div class="about-desc">ML-защита от фишинговых атак</div>
+                    </div>
+                </div>
+                <div class="about-meta">
+                    <span>Точность модели: <strong>97%</strong></span>
+                    <span>·</span>
+                    <span>XGBoost / RandomForest</span>
+                    <span>·</span>
+                    <span>33 признака URL</span>
+                </div>
+                <p class="about-copy">© 2025 Назаров Андрей Алексеевич. Все права защищены.</p>
+            </section>
+
+        </main>
+
+        <!-- Нижняя панель -->
+        <footer class="footer">
+            <button class="btn btn-ghost" id="cancelBtn">Отмена</button>
+            <div class="save-group">
+                <span class="save-hint" id="saveHint"></span>
+                <button class="btn btn-primary" id="saveBtn">Сохранить настройки</button>
+            </div>
+        </footer>
+
+    </div>
+
+    <script src="settings.js"></script>
+</body>
+</html>

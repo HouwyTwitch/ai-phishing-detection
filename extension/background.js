@@ -1,559 +1,429 @@
-console.log('Сервис-воркер АнтиФиш запущен');
+'use strict';
 
-const API_BASE = 'http://localhost:8787/api/v1';
-const urlCache = new Map();
-const manualBypassCache = new Map();
-const pendingChecks = new Map();
-const AI_CHECK_DELAY = 60 * 1000;
-const BYPASS_TTL = 5 * 60 * 1000;
+// ── Константы ──────────────────────────────────────────────────────────────
+const DEFAULT_API_BASE = 'http://localhost:8787/api/v1';
+const AI_CHECK_DELAY   = 60 * 1000;   // 1 минута
+const BYPASS_TTL       = 5 * 60 * 1000;
+const CACHE_TTL        = 10 * 60 * 1000;
 
-const CheckLevel = {
-    FAST: 'fast',
-    AI: 'ai',
-    AI_CONTENT: 'ai_content'
-};
-
-const CheckStatus = {
+const CheckLevel = Object.freeze({ FAST: 'fast', AI: 'ai', AI_CONTENT: 'ai_content' });
+const CheckStatus = Object.freeze({
     NOT_CHECKED: 'not_checked',
-    CHECKING: 'checking',
-    SAFE: 'safe',
-    PHISHING: 'phishing',
-    UNKNOWN: 'unknown'
+    CHECKING:    'checking',
+    SAFE:        'safe',
+    PHISHING:    'phishing',
+    UNKNOWN:     'unknown',
+});
+
+// ── Состояние ──────────────────────────────────────────────────────────────
+const urlCache         = new Map();
+const manualBypassCache = new Map();
+const pendingChecks    = new Map();
+
+let settings = {
+    apiUrl:          DEFAULT_API_BASE.replace('/api/v1', ''),
+    apiKey:          '',
+    sensitivity:     65,
+    checkMode:       'auto',
+    notifEnabled:    true,
+    linkWarning:     true,
+    plan:            'free',
 };
 
-let checkCounter = {
-    today: 0,
-    week: 0,
-    total: 0,
-    blocked: 0,
-    safe: 0,
-    unknown: 0
-};
+let checkCounter = { today: 0, week: 0, total: 0, blocked: 0, safe: 0, unknown: 0 };
 
+function getApiBase() {
+    return (settings.apiUrl || '').replace(/\/$/, '') + '/api/v1';
+}
+
+function getThreshold() {
+    return (settings.sensitivity || 65) / 100;
+}
+
+function buildHeaders() {
+    const h = { 'Content-Type': 'application/json' };
+    if (settings.apiKey) h['X-API-Key'] = settings.apiKey;
+    return h;
+}
+
+// ── Загрузка настроек ──────────────────────────────────────────────────────
+async function loadSettings() {
+    try {
+        const data = await chrome.storage.sync.get({
+            apiUrl:       'http://localhost:8787',
+            apiKey:       '',
+            sensitivity:  65,
+            checkMode:    'auto',
+            notifEnabled: true,
+            linkWarning:  true,
+            plan:         'free',
+        });
+        settings = data;
+    } catch (err) {
+        console.warn('АнтиФиш: не удалось загрузить настройки:', err);
+    }
+}
+
+chrome.storage.onChanged.addListener((changes, area) => {
+    if (area !== 'sync') return;
+    for (const [key, { newValue }] of Object.entries(changes)) {
+        if (key in settings) settings[key] = newValue;
+    }
+});
+
+// ── Статистика ─────────────────────────────────────────────────────────────
 function getTodayKey() {
-    const now = new Date();
-    return `${now.getFullYear()}-${now.getMonth() + 1}-${now.getDate()}`;
+    const d = new Date();
+    return `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`;
 }
 
 function getWeekKey() {
-    const now = new Date();
-    const startOfWeek = new Date(now);
-    startOfWeek.setDate(now.getDate() - now.getDay());
-    return `${startOfWeek.getFullYear()}-${startOfWeek.getMonth() + 1}-${startOfWeek.getDate()}`;
+    const d = new Date();
+    const s = new Date(d);
+    s.setDate(d.getDate() - d.getDay());
+    return `${s.getFullYear()}-${s.getMonth() + 1}-${s.getDate()}`;
 }
 
 function updateCheckStats(result) {
     const todayKey = getTodayKey();
-    const weekKey = getWeekKey();
-    
-    try {
-        checkCounter.total++;
-        
+    const weekKey  = getWeekKey();
+
+    checkCounter.total++;
+    if (result.phishing === true)  checkCounter.blocked++;
+    else if (result.phishing === false) checkCounter.safe++;
+    else checkCounter.unknown++;
+
+    chrome.storage.local.get(['daily_stats', 'weekly_stats'], data => {
+        const daily  = data.daily_stats  || {};
+        const weekly = data.weekly_stats || {};
+
+        daily[todayKey]  = daily[todayKey]  || { checks: 0, blocked: 0 };
+        weekly[weekKey]  = weekly[weekKey]  || { checks: 0, blocked: 0 };
+
+        daily[todayKey].checks++;
+        weekly[weekKey].checks++;
+
         if (result.phishing === true) {
-            checkCounter.blocked++;
-        } else if (result.phishing === false) {
-            checkCounter.safe++;
-        } else {
-            checkCounter.unknown++;
+            daily[todayKey].blocked++;
+            weekly[weekKey].blocked++;
         }
-        
-        chrome.storage.local.get(['daily_stats', 'weekly_stats'], (data) => {
-            const dailyStats = data.daily_stats || {};
-            const weeklyStats = data.weekly_stats || {};
-            
-            if (!dailyStats[todayKey]) {
-                dailyStats[todayKey] = { checks: 0, blocked: 0 };
-            }
-            dailyStats[todayKey].checks++;
-            if (result.phishing === true) {
-                dailyStats[todayKey].blocked++;
-            }
-            
-            if (!weeklyStats[weekKey]) {
-                weeklyStats[weekKey] = { checks: 0, blocked: 0 };
-            }
-            weeklyStats[weekKey].checks++;
-            if (result.phishing === true) {
-                weeklyStats[weekKey].blocked++;
-            }
-            
-            chrome.storage.local.set({
-                daily_stats: dailyStats,
-                weekly_stats: weeklyStats,
-                stats_today: dailyStats[todayKey]?.checks || 0,
-                stats_week: weeklyStats[weekKey]?.checks || 0,
-                stats_blocked: checkCounter.blocked,
-                stats_total: checkCounter.total
-            });
+
+        chrome.storage.local.set({
+            daily_stats:   daily,
+            weekly_stats:  weekly,
+            stats_today:   daily[todayKey].checks,
+            stats_week:    weekly[weekKey].checks,
+            stats_blocked: checkCounter.blocked,
+            stats_total:   checkCounter.total,
+            stats_safe:    checkCounter.safe,
         });
-        
-    } catch (error) {
-        console.error('Ошибка обновления статистики:', error);
-    }
+    });
 }
 
 async function loadInitialStats() {
     try {
         const data = await chrome.storage.local.get([
-            'stats_today', 
-            'stats_week', 
-            'stats_blocked',
-            'stats_total'
+            'stats_today', 'stats_week', 'stats_blocked', 'stats_total', 'stats_safe'
         ]);
-        
-        checkCounter.today = data.stats_today || 0;
-        checkCounter.week = data.stats_week || 0;
+        checkCounter.today   = data.stats_today   || 0;
+        checkCounter.week    = data.stats_week    || 0;
         checkCounter.blocked = data.stats_blocked || 0;
-        checkCounter.total = data.stats_total || 0;
-        
-        console.log('Статистика загружена:', checkCounter);
-    } catch (error) {
-        console.error('Ошибка загрузки статистики:', error);
+        checkCounter.total   = data.stats_total   || 0;
+        checkCounter.safe    = data.stats_safe    || 0;
+    } catch (err) {
+        console.error('АнтиФиш: ошибка загрузки статистики:', err);
     }
 }
 
-loadInitialStats();
-
+// ── Основная логика проверки ───────────────────────────────────────────────
 async function checkUrl(url, level = CheckLevel.FAST, content = null) {
-    console.log(`Проверяем URL (${level}):`, url);
-    
     const cacheKey = `${url}:${level}`;
     const cached = urlCache.get(cacheKey);
-    if (cached) {
-        console.log('Используем кэш для:', cacheKey);
-        return cached.result;
+    if (cached) return cached.result;
+
+    const base = getApiBase();
+    let endpoint, body;
+
+    switch (level) {
+        case CheckLevel.FAST:
+            endpoint = `${base}/fast`;
+            body = { link: url, threshold: getThreshold() };
+            break;
+        case CheckLevel.AI:
+            endpoint = `${base}/ai`;
+            body = { link: url, threshold: getThreshold() };
+            break;
+        case CheckLevel.AI_CONTENT:
+            endpoint = `${base}/ai-content`;
+            body = { link: url, content: content || '', threshold: getThreshold() };
+            break;
     }
 
     try {
-        let endpoint;
-        let requestBody;
-        
-        switch(level) {
-            case CheckLevel.FAST:
-                endpoint = `${API_BASE}/fast`;
-                requestBody = { link: url };
-                break;
-                
-            case CheckLevel.AI:
-                endpoint = `${API_BASE}/ai`;
-                requestBody = { link: url };
-                break;
-                
-            case CheckLevel.AI_CONTENT:
-                endpoint = `${API_BASE}/ai-content`;
-                requestBody = { 
-                    link: url, 
-                    content: content || 'Нет контента для анализа' 
-                };
-                break;
-        }
-
-        const response = await fetch(endpoint, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(requestBody)
+        const resp = await fetch(endpoint, {
+            method:  'POST',
+            headers: buildHeaders(),
+            body:    JSON.stringify(body),
         });
 
-        if (!response.ok) {
-            console.error(`Ошибка API (${level}):`, response.status);
+        if (!resp.ok) {
+            console.warn(`АнтиФиш: API ${level} вернул ${resp.status}`);
             return null;
         }
-        
-        const result = await response.json();
-        console.log(`Результат проверки (${level}):`, result);
-        
-        urlCache.set(cacheKey, {
-            result: result,
-            timestamp: Date.now(),
-            level: level
-        });
 
+        const result = await resp.json();
+
+        urlCache.set(cacheKey, { result, timestamp: Date.now(), level });
         return result;
-    } catch (error) {
-        console.error(`Ошибка проверки URL (${level}):`, error);
+    } catch (err) {
+        console.error(`АнтиФиш: ошибка запроса (${level}):`, err.message);
         return null;
     }
 }
 
-async function extractPageContent(url, tabId) {
-    return new Promise((resolve) => {
-        chrome.tabs.sendMessage(
-            tabId,
-            { type: 'GET_PAGE_CONTENT' },
-            (response) => {
-                if (chrome.runtime.lastError) {
-                    console.log('Не удалось получить контент:', chrome.runtime.lastError.message);
-                    resolve('Нет контента для анализа');
-                } else if (response && response.content) {
-                    const content = response.content.substring(0, 5000);
-                    resolve(content);
-                } else {
-                    resolve('Нет контента для анализа');
-                }
+async function extractPageContent(tabId) {
+    return new Promise(resolve => {
+        chrome.tabs.sendMessage(tabId, { type: 'GET_PAGE_CONTENT' }, resp => {
+            if (chrome.runtime.lastError || !resp?.content) {
+                resolve('');
+            } else {
+                resolve(resp.content.substring(0, 5000));
             }
-        );
+        });
     });
 }
 
 async function checkUrlThreeStep(url, tabId) {
-    console.log('Запуск трехэтапной проверки для:', url);
-    
-    const bypassKey = `bypass:${url}`;
-    const bypassData = manualBypassCache.get(bypassKey);
-    
-    if (bypassData && (Date.now() - bypassData.timestamp) < BYPASS_TTL) {
-        console.log('Сайт был вручную разблокирован пользователем');
-        return { 
-            status: CheckStatus.SAFE, 
-            result: { phishing: false, source: 'manual_bypass' },
-            level: 'manual_bypass'
-        };
+    // Ручной bypass
+    const bypass = manualBypassCache.get(`bypass:${url}`);
+    if (bypass && Date.now() - bypass.timestamp < BYPASS_TTL) {
+        return { status: CheckStatus.SAFE, result: { phishing: false, source: 'manual_bypass' } };
     }
-    
+
+    // Шаг 1: быстрая проверка
     const fastResult = await checkUrl(url, CheckLevel.FAST);
-    
-    if (!fastResult) {
-        console.log('Ошибка при FAST проверке');
-        return { status: CheckStatus.UNKNOWN, result: null };
-    }
-    
+    if (!fastResult) return { status: CheckStatus.UNKNOWN, result: null };
+
     if (fastResult.phishing === true) {
-        console.log('Фишинг обнаружен на FAST этапе:', fastResult.source);
         updateCheckStats(fastResult);
-        return { 
-            status: CheckStatus.PHISHING, 
-            result: fastResult,
-            level: CheckLevel.FAST 
-        };
+        return { status: CheckStatus.PHISHING, result: fastResult, level: CheckLevel.FAST };
     }
-    
     if (fastResult.phishing === false) {
-        console.log('Сайт безопасен (белый список):', fastResult.source);
         updateCheckStats(fastResult);
-        return { 
-            status: CheckStatus.SAFE, 
-            result: fastResult,
-            level: CheckLevel.FAST 
-        };
+        return { status: CheckStatus.SAFE, result: fastResult, level: CheckLevel.FAST };
     }
-    
-    if (fastResult.phishing === null || fastResult.phishing === undefined) {
-        console.log('FAST: Не в списках, проверяем через AI...');
-        
-        const aiResult = await checkUrl(url, CheckLevel.AI);
-        
-        if (!aiResult) {
-            console.log('Ошибка при AI проверке');
-            updateCheckStats(fastResult);
-            return { 
-                status: CheckStatus.UNKNOWN, 
-                result: fastResult,
-                level: CheckLevel.FAST 
-            };
-        }
-        
-        if (aiResult.phishing === true) {
-            console.log('Фишинг обнаружен AI:', aiResult.source);
-            updateCheckStats(aiResult);
-            return { 
-                status: CheckStatus.PHISHING, 
-                result: aiResult,
-                level: CheckLevel.AI 
-            };
-        }
-        
-        if (aiResult.phishing === false) {
-            console.log('AI определил как безопасный:', aiResult.source);
-            updateCheckStats(aiResult);
-            return { 
-                status: CheckStatus.SAFE, 
-                result: aiResult,
-                level: CheckLevel.AI 
-            };
-        }
-        
-        if (aiResult.phishing === null || aiResult.phishing === undefined) {
-            console.log('AI не определил, планируем проверку контента...');
-            updateCheckStats(aiResult);
-            scheduleContentCheck(url, tabId);
-            
-            return { 
-                status: CheckStatus.UNKNOWN, 
-                result: aiResult,
-                level: CheckLevel.AI 
-            };
-        }
+
+    // Шаг 2: AI-проверка по URL
+    const aiResult = await checkUrl(url, CheckLevel.AI);
+    if (!aiResult) {
+        updateCheckStats(fastResult);
+        return { status: CheckStatus.UNKNOWN, result: fastResult };
     }
-    
-    updateCheckStats(fastResult);
-    return { 
-        status: CheckStatus.UNKNOWN, 
-        result: fastResult,
-        level: CheckLevel.FAST 
-    };
+
+    if (aiResult.phishing === true) {
+        updateCheckStats(aiResult);
+        return { status: CheckStatus.PHISHING, result: aiResult, level: CheckLevel.AI };
+    }
+    if (aiResult.phishing === false) {
+        updateCheckStats(aiResult);
+        return { status: CheckStatus.SAFE, result: aiResult, level: CheckLevel.AI };
+    }
+
+    // Шаг 3: AI-анализ контента (только Премиум)
+    updateCheckStats(aiResult);
+    if (settings.plan === 'premium') {
+        scheduleContentCheck(url, tabId);
+    }
+    return { status: CheckStatus.UNKNOWN, result: aiResult, level: CheckLevel.AI };
 }
 
 function scheduleContentCheck(url, tabId) {
-    const checkKey = `${url}:${tabId}`;
-    
-    if (pendingChecks.has(checkKey)) {
-        console.log('Проверка контента уже запланирована для:', url);
-        return;
-    }
-    
-    console.log('Планируем проверку контента через 1 минуту для:', url);
-    
+    const key = `${url}:${tabId}`;
+    if (pendingChecks.has(key)) return;
+
     const timeoutId = setTimeout(async () => {
-        console.log('Запуск AI-CONTENT проверки для:', url);
-        
         try {
-            const content = await extractPageContent(url, tabId);
-            const contentResult = await checkUrl(url, CheckLevel.AI_CONTENT, content);
-            
-            if (contentResult) {
-                console.log('Результат AI-CONTENT проверки:', contentResult);
-                updateCheckStats(contentResult);
-                
-                if (contentResult.phishing === true) {
-                    console.log('Фишинг обнаружен при анализе контента!');
-                    
-                    chrome.tabs.update(tabId, {
-                        url: chrome.runtime.getURL('blocked.html') + 
-                             '?url=' + encodeURIComponent(url) +
-                             '&source=' + (contentResult.source || 'ai_content') +
-                             '&risk=' + (contentResult.chance ? 'Высокий' : 'Средний')
-                    });
-                    
-                    try {
-                        await chrome.notifications.create({
-                            type: 'basic',
-                            iconUrl: 'icons/icon48.png',
-                            title: '⚠️ Фишинг обнаружен',
-                            message: 'Страница заблокирована после анализа контента'
-                        });
-                    } catch (e) {
-                        console.log('Уведомление не доступно:', e);
-                    }
-                }
+            const content = await extractPageContent(tabId);
+            const result  = await checkUrl(url, CheckLevel.AI_CONTENT, content);
+            if (!result) return;
+
+            updateCheckStats(result);
+
+            if (result.phishing === true) {
+                chrome.tabs.update(tabId, {
+                    url: chrome.runtime.getURL('blocked.html') +
+                         `?url=${encodeURIComponent(url)}&source=${result.source || 'ai_content'}&risk=Высокий`,
+                });
+                _showNotification('⚠️ Фишинг обнаружен', 'Страница заблокирована после анализа содержимого');
             }
-        } catch (error) {
-            console.error('Ошибка при проверке контента:', error);
+        } catch (err) {
+            console.error('АнтиФиш: ошибка AI-CONTENT проверки:', err);
         } finally {
-            pendingChecks.delete(checkKey);
+            pendingChecks.delete(key);
         }
     }, AI_CHECK_DELAY);
-    
-    pendingChecks.set(checkKey, {
-        url: url,
-        tabId: tabId,
-        timeoutId: timeoutId,
-        scheduledAt: Date.now()
-    });
+
+    pendingChecks.set(key, { url, tabId, timeoutId, scheduledAt: Date.now() });
+}
+
+function _showNotification(title, message) {
+    if (!settings.notifEnabled) return;
+    chrome.notifications.create({
+        type: 'basic', iconUrl: 'icons/icon48.png', title, message,
+    }).catch(() => {});
 }
 
 function addManualBypass(url) {
-    const bypassKey = `bypass:${url}`;
-    manualBypassCache.set(bypassKey, {
-        url: url,
-        timestamp: Date.now(),
-        reason: 'user_manual_override'
-    });
-    
-    console.log('Добавлен ручной bypass для:', url);
-    
-    setTimeout(() => {
-        manualBypassCache.delete(bypassKey);
-    }, BYPASS_TTL);
+    const key = `bypass:${url}`;
+    manualBypassCache.set(key, { url, timestamp: Date.now() });
+    setTimeout(() => manualBypassCache.delete(key), BYPASS_TTL);
 }
 
 function removeFromCache(url) {
-    console.log('Удаляем из кэша URL:', url);
-    
-    for (const [key, data] of urlCache.entries()) {
-        if (key.startsWith(`${url}:`)) {
-            urlCache.delete(key);
-            console.log('Удалено из кэша:', key);
-        }
+    for (const key of urlCache.keys()) {
+        if (key.startsWith(`${url}:`)) urlCache.delete(key);
     }
-    
     for (const [key, check] of pendingChecks.entries()) {
         if (check.url === url) {
             clearTimeout(check.timeoutId);
             pendingChecks.delete(key);
-            console.log('Удалена запланированная проверка для:', url);
         }
     }
 }
 
+// ── Слушатели вкладок ──────────────────────────────────────────────────────
 chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
-    if (changeInfo.status === 'loading' && tab.url) {
-        const url = tab.url;
-        
-        if (url.startsWith('chrome://') || 
-            url.startsWith('chrome-extension://') ||
-            url.startsWith('about:')) {
-            return;
-        }
+    if (changeInfo.status !== 'loading' || !tab.url) return;
 
-        console.log('Проверяем страницу:', url);
-        
-        const checkResult = await checkUrlThreeStep(url, tabId);
-        
-        if (checkResult.status === CheckStatus.PHISHING) {
-            console.log('Блокируем фишинг-сайт:', url);
-            
-            chrome.tabs.update(tabId, {
-                url: chrome.runtime.getURL('blocked.html') + 
-                     '?url=' + encodeURIComponent(url) +
-                     '&source=' + (checkResult.result?.source || 'unknown') +
-                     '&risk=' + (checkResult.result?.chance ? 'Высокий' : 'Средний')
-            });
-            
-            try {
-                await chrome.notifications.create({
-                    type: 'basic',
-                    iconUrl: 'icons/icon48.png',
-                    title: '⚠️ Фишинг-сайт заблокирован',
-                    message: 'Доступ к сайту ограничен системой безопасности'
-                });
-            } catch (e) {
-                console.log('Уведомление не доступно:', e);
-            }
-        }
-        
-        else if (checkResult.status === CheckStatus.SAFE) {
-            console.log('Сайт безопасен:', url);
-        }
-        
-        else if (checkResult.status === CheckStatus.UNKNOWN) {
-            console.log('Статус неизвестен, AI проверка завершена или запланирована:', url);
-        }
+    const url = tab.url;
+    if (url.startsWith('chrome://') || url.startsWith('chrome-extension://') || url.startsWith('about:')) return;
+
+    if (settings.checkMode === 'manual') return;
+
+    const checkResult = await checkUrlThreeStep(url, tabId);
+
+    if (checkResult.status === CheckStatus.PHISHING) {
+        const r = checkResult.result || {};
+        const chance = r.chance ?? '';
+        chrome.tabs.update(tabId, {
+            url: chrome.runtime.getURL('blocked.html') +
+                 `?url=${encodeURIComponent(url)}&source=${r.source || 'unknown'}&risk=${chance ? 'Высокий' : 'Средний'}`,
+        });
+        _showNotification('⚠️ Фишинг-сайт заблокирован', 'Доступ к сайту ограничен системой безопасности АнтиФиш');
     }
 });
 
-chrome.tabs.onRemoved.addListener((tabId) => {
+chrome.tabs.onRemoved.addListener(tabId => {
     for (const [key, check] of pendingChecks.entries()) {
         if (check.tabId === tabId) {
             clearTimeout(check.timeoutId);
             pendingChecks.delete(key);
-            console.log('Удалена запланированная проверка для закрытой вкладки:', check.url);
         }
     }
 });
 
+// ── Обмен сообщениями с попапом и страницами ───────────────────────────────
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-    switch(request.type) {
-        case 'GET_CHECK_STATUS':
-            const cacheKey = `${request.url}:fast`;
-            const cached = urlCache.get(cacheKey);
-            
-            if (cached) {
-                sendResponse({
-                    checked: true,
-                    result: cached.result,
-                    level: cached.level,
-                    timestamp: cached.timestamp
-                });
-            } else {
-                const aiCacheKey = `${request.url}:ai`;
-                const aiCached = urlCache.get(aiCacheKey);
-                
-                if (aiCached) {
-                    sendResponse({
-                        checked: true,
-                        result: aiCached.result,
-                        level: aiCached.level,
-                        timestamp: aiCached.timestamp
-                    });
-                } else {
-                    sendResponse({ checked: false });
+    switch (request.type) {
+
+        case 'GET_CHECK_STATUS': {
+            const levels = [CheckLevel.AI, CheckLevel.FAST, CheckLevel.AI_CONTENT];
+            for (const lvl of levels) {
+                const c = urlCache.get(`${request.url}:${lvl}`);
+                if (c) {
+                    sendResponse({ checked: true, result: c.result, level: c.level, timestamp: c.timestamp });
+                    return true;
                 }
             }
-            break;
-            
+            sendResponse({ checked: false });
+            return true;
+        }
+
         case 'CLEAR_CACHE':
             urlCache.clear();
             manualBypassCache.clear();
-            pendingChecks.forEach(check => clearTimeout(check.timeoutId));
+            pendingChecks.forEach(c => clearTimeout(c.timeoutId));
             pendingChecks.clear();
-            console.log('Кэш очищен');
             sendResponse({ success: true });
-            break;
-            
+            return true;
+
         case 'ADD_MANUAL_BYPASS':
             addManualBypass(request.url);
             sendResponse({ success: true });
-            break;
-            
+            return true;
+
         case 'REMOVE_FROM_CACHE':
             removeFromCache(request.url);
             sendResponse({ success: true });
-            break;
-            
-        case 'GET_STATS':
+            return true;
+
+        case 'GET_STATS': {
             const todayKey = getTodayKey();
-            const weekKey = getWeekKey();
-            
-            chrome.storage.local.get(['daily_stats', 'weekly_stats'], (data) => {
-                const dailyStats = data.daily_stats || {};
-                const weeklyStats = data.weekly_stats || {};
-                
-                const todayChecks = dailyStats[todayKey]?.checks || 0;
-                const weekChecks = weeklyStats[weekKey]?.checks || 0;
-                
+            const weekKey  = getWeekKey();
+            chrome.storage.local.get(['daily_stats', 'weekly_stats'], data => {
+                const daily  = data.daily_stats  || {};
+                const weekly = data.weekly_stats || {};
                 sendResponse({
                     success: true,
-                    today: todayChecks,
-                    week: weekChecks,
+                    today:   daily[todayKey]?.checks  || 0,
+                    week:    weekly[weekKey]?.checks  || 0,
                     blocked: checkCounter.blocked,
-                    total: checkCounter.total,
-                    safe: checkCounter.safe,
-                    unknown: checkCounter.unknown
+                    total:   checkCounter.total,
+                    safe:    checkCounter.safe,
+                    unknown: checkCounter.unknown,
                 });
             });
             return true;
-            
+        }
+
         case 'UPDATE_STATS':
-            if (request.result) {
-                updateCheckStats(request.result);
-                sendResponse({ success: true });
-            }
+            if (request.result) updateCheckStats(request.result);
+            sendResponse({ success: true });
             return true;
-            
+
         case 'RESET_STATS':
-            checkCounter = {
-                today: 0,
-                week: 0,
-                total: 0,
-                blocked: 0,
-                safe: 0,
-                unknown: 0
-            };
-            chrome.storage.local.clear(() => {
-                sendResponse({ success: true });
-            });
+            checkCounter = { today: 0, week: 0, total: 0, blocked: 0, safe: 0, unknown: 0 };
+            chrome.storage.local.clear(() => sendResponse({ success: true }));
             return true;
+
+        case 'GET_SETTINGS':
+            sendResponse({ success: true, settings });
+            return true;
+
+        case 'CHECK_LINK': {
+            // Мгновенная проверка ссылки из content.js
+            checkUrl(request.url, CheckLevel.FAST)
+                .then(result => {
+                    if (result?.phishing === true) {
+                        sendResponse({ block: true, data: result });
+                    } else {
+                        sendResponse({ block: false });
+                    }
+                })
+                .catch(() => sendResponse({ block: false }));
+            return true;
+        }
     }
-    
+
     return true;
 });
 
+// ── Очистка кэша по TTL ────────────────────────────────────────────────────
 setInterval(() => {
     const now = Date.now();
-    const CACHE_TTL = 10 * 60 * 1000;
-    
     for (const [key, data] of urlCache.entries()) {
-        if (now - data.timestamp > CACHE_TTL) {
-            urlCache.delete(key);
-        }
+        if (now - data.timestamp > CACHE_TTL) urlCache.delete(key);
     }
 }, 5 * 60 * 1000);
 
+// ── Запуск ─────────────────────────────────────────────────────────────────
+(async () => {
+    await loadSettings();
+    await loadInitialStats();
+    console.log('АнтиФиш v1.1.0 запущен | API:', getApiBase(), '| план:', settings.plan);
+})();
+
+// ── Экспорт для тестов ─────────────────────────────────────────────────────
 if (typeof module !== 'undefined' && module.exports) {
-    module.exports = { 
-        checkUrlThreeStep,
-        removeFromCache,
-        CheckLevel,
-        CheckStatus
-    };
+    module.exports = { checkUrlThreeStep, removeFromCache, CheckLevel, CheckStatus };
 }

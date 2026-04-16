@@ -1,0 +1,59 @@
+version: "3.9"
+
+# ── АнтиФиш — Docker Compose ──────────────────────────────────────────────
+# Запуск: docker compose up -d
+# Остановка: docker compose down
+
+services:
+  antiphish-api:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    container_name: antiphish-api
+    restart: unless-stopped
+
+    # Переменные окружения — берём из файла .env (скопируйте из .env.example)
+    env_file:
+      - ./server/.env
+
+    environment:
+      ANTIPHISH_HOST: "0.0.0.0"
+      ANTIPHISH_PORT: "8787"
+      ANTIPHISH_LOG_LEVEL: "INFO"
+
+    ports:
+      - "8787:8787"
+
+    volumes:
+      # Персистентное хранение ассетов и логов
+      - antiphish_assets:/app/assets
+      - antiphish_logs:/app/logs
+
+    healthcheck:
+      test: ["CMD", "python", "-c",
+             "import urllib.request; urllib.request.urlopen('http://localhost:8787/health')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+    # Ограничение ресурсов
+    deploy:
+      resources:
+        limits:
+          cpus: "2.0"
+          memory: 1G
+        reservations:
+          memory: 256M
+
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"
+        max-file: "5"
+
+volumes:
+  antiphish_assets:
+    driver: local
+  antiphish_logs:
+    driver: local
