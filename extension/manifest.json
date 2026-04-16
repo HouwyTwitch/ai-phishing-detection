@@ -1,0 +1,46 @@
+{
+  "manifest_version": 3,
+  "name": "АнтиФиш",
+  "version": "1.0.0",
+  "description": "Защита от фишинговых сайтов с AI-анализом",
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "action": {
+    "default_popup": "popup/popup.html",
+    "default_title": "АнтиФиш"
+  },
+  "permissions": [
+    "webNavigation",
+    "storage",
+    "notifications",
+    "tabs"
+  ],
+  "host_permissions": [
+    "http://localhost:8787/*",
+    "<all_urls>"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["content.js"],
+      "run_at": "document_idle"
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "blocked.html", 
+        "blocked.js", 
+        "popup/*", 
+        "icons/*"
+      ],
+      "matches": ["<all_urls>"]
+    }
+  ]
+}
