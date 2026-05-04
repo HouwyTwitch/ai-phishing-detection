@@ -1,0 +1,675 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>АнтиФиш — Admin</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0a0b0f;
+      --surface: #131620;
+      --surface-2: #1a1d27;
+      --border: #252836;
+      --accent: #6366f1;
+      --accent-dim: rgba(99,102,241,0.12);
+      --accent-hover: #818cf8;
+      --success: #10b981;
+      --success-dim: rgba(16,185,129,0.12);
+      --danger: #ef4444;
+      --danger-dim: rgba(239,68,68,0.12);
+      --warning: #f59e0b;
+      --warning-dim: rgba(245,158,11,0.12);
+      --text: #e2e8f0;
+      --text-muted: #64748b;
+      --text-dim: #94a3b8;
+      --sidebar-w: 216px;
+      --header-h: 58px;
+      --r: 10px;
+      --r-sm: 6px;
+      --t: 0.15s ease;
+    }
+
+    html, body { height: 100%; background: var(--bg); color: var(--text); font-family: 'Inter', system-ui, -apple-system, sans-serif; font-size: 14px; line-height: 1.5; }
+
+    /* ── Layout ── */
+    .layout { display: grid; grid-template-columns: var(--sidebar-w) 1fr; grid-template-rows: var(--header-h) 1fr; height: 100vh; }
+
+    /* ── Sidebar ── */
+    .sidebar { grid-row: 1 / 3; background: var(--surface); border-right: 1px solid var(--border); display: flex; flex-direction: column; padding: 0 10px; }
+    .logo { height: var(--header-h); display: flex; align-items: center; gap: 10px; padding: 0 8px; border-bottom: 1px solid var(--border); font-weight: 600; font-size: 15px; letter-spacing: -0.3px; }
+    .logo-icon { width: 28px; height: 28px; background: var(--accent); border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .nav { padding: 14px 0; flex: 1; display: flex; flex-direction: column; gap: 2px; }
+    .nav-item { display: flex; align-items: center; gap: 10px; padding: 9px 10px; border-radius: var(--r-sm); cursor: pointer; color: var(--text-muted); font-weight: 500; transition: all var(--t); user-select: none; font-size: 13.5px; }
+    .nav-item:hover { background: var(--surface-2); color: var(--text-dim); }
+    .nav-item.active { background: var(--accent-dim); color: var(--accent); }
+    .nav-icon { width: 17px; height: 17px; flex-shrink: 0; }
+
+    /* ── Header ── */
+    .header { background: var(--surface); border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; padding: 0 24px; }
+    .header-title { font-size: 15px; font-weight: 600; }
+    .status-pill { display: inline-flex; align-items: center; gap: 7px; font-size: 12.5px; color: var(--text-dim); background: var(--surface-2); border: 1px solid var(--border); border-radius: 20px; padding: 4px 12px; }
+    .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--text-muted); flex-shrink: 0; }
+    .dot.online { background: var(--success); box-shadow: 0 0 6px rgba(16,185,129,0.6); }
+    .dot.offline { background: var(--danger); }
+
+    /* ── Main ── */
+    .main { overflow-y: auto; padding: 24px; background: var(--bg); }
+    .section { display: none; }
+    .section.active { display: block; }
+    .page-title { font-size: 20px; font-weight: 600; margin-bottom: 20px; letter-spacing: -0.4px; }
+
+    /* ── Stat cards ── */
+    .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 14px; margin-bottom: 20px; }
+    .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--r); padding: 18px 20px; }
+    .card-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.6px; color: var(--text-muted); margin-bottom: 10px; }
+    .card-value { font-size: 28px; font-weight: 600; letter-spacing: -1px; }
+    .card-value.accent { color: var(--accent); }
+    .card-value.success { color: var(--success); }
+    .card-value.danger { color: var(--danger); }
+    .card-sub { font-size: 12px; color: var(--text-muted); margin-top: 3px; }
+
+    /* ── Panel ── */
+    .panel { background: var(--surface); border: 1px solid var(--border); border-radius: var(--r); overflow: hidden; }
+    .panel-header { padding: 14px 20px; display: flex; align-items: center; gap: 10px; border-bottom: 1px solid var(--border); flex-wrap: wrap; }
+    .panel-title { font-size: 14px; font-weight: 600; flex: 1; min-width: 100px; }
+
+    /* ── Inputs ── */
+    .search-input { background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--r-sm); padding: 7px 12px; color: var(--text); font-size: 13px; font-family: inherit; outline: none; width: 210px; transition: border-color var(--t); }
+    .search-input:focus { border-color: var(--accent); }
+    .search-input::placeholder { color: var(--text-muted); }
+    .select { background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--r-sm); padding: 7px 10px; color: var(--text); font-size: 13px; font-family: inherit; outline: none; cursor: pointer; }
+    .add-input { flex: 1; background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--r-sm); padding: 8px 12px; color: var(--text); font-size: 13px; font-family: 'Courier New', monospace; outline: none; transition: border-color var(--t); }
+    .add-input:focus { border-color: var(--accent); }
+    .add-input::placeholder { font-family: 'Inter', system-ui, sans-serif; color: var(--text-muted); }
+
+    /* ── Buttons ── */
+    .btn { display: inline-flex; align-items: center; gap: 6px; padding: 7px 14px; border-radius: var(--r-sm); font-size: 13px; font-weight: 500; font-family: inherit; cursor: pointer; border: none; transition: all var(--t); white-space: nowrap; }
+    .btn-primary { background: var(--accent); color: #fff; }
+    .btn-primary:hover { background: var(--accent-hover); }
+    .btn-ghost { background: transparent; color: var(--text-dim); border: 1px solid var(--border); }
+    .btn-ghost:hover { background: var(--surface-2); color: var(--text); }
+    .btn-danger { background: var(--danger-dim); color: var(--danger); border: 1px solid transparent; }
+    .btn-danger:hover:not(:disabled) { background: var(--danger); color: #fff; }
+    .btn-success { background: var(--success-dim); color: var(--success); border: 1px solid transparent; }
+    .btn-success:hover:not(:disabled) { background: var(--success); color: #fff; }
+    .btn-sm { padding: 4px 10px; font-size: 12px; }
+    .btn:disabled { opacity: 0.5; cursor: default; }
+
+    /* ── Table ── */
+    .table-wrap { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; }
+    thead th { padding: 9px 20px; text-align: left; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); background: var(--surface-2); border-bottom: 1px solid var(--border); }
+    tbody tr { border-bottom: 1px solid var(--border); transition: background var(--t); }
+    tbody tr:last-child { border-bottom: none; }
+    tbody tr:hover { background: rgba(255,255,255,0.02); }
+    tbody td { padding: 9px 20px; font-size: 13px; color: var(--text-dim); }
+    tbody td:first-child { color: var(--text-muted); font-size: 12px; width: 50px; }
+    tbody td:nth-child(2) { font-family: 'Courier New', monospace; font-size: 12.5px; color: var(--text); }
+
+    /* ── Add form ── */
+    .add-form { display: flex; gap: 10px; padding: 14px 20px; border-top: 1px solid var(--border); background: rgba(0,0,0,0.2); }
+
+    /* ── Pagination ── */
+    .pagination { display: flex; align-items: center; justify-content: space-between; padding: 11px 20px; border-top: 1px solid var(--border); font-size: 12.5px; color: var(--text-muted); }
+    .pagination-pages { display: flex; gap: 3px; }
+    .page-btn { width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; border-radius: var(--r-sm); cursor: pointer; border: 1px solid transparent; font-size: 13px; transition: all var(--t); color: var(--text-dim); background: transparent; font-family: inherit; }
+    .page-btn:hover:not(:disabled) { background: var(--surface-2); }
+    .page-btn.active { background: var(--accent-dim); color: var(--accent); border-color: rgba(99,102,241,0.3); }
+    .page-btn:disabled { opacity: 0.3; cursor: default; }
+
+    /* ── Info rows ── */
+    .info-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--border); font-size: 13px; }
+    .info-row:last-child { border-bottom: none; }
+    .info-label { color: var(--text-muted); }
+    .info-value { color: var(--text); font-weight: 500; }
+
+    /* ── Badges ── */
+    .badge { display: inline-flex; align-items: center; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; }
+    .badge-success { background: var(--success-dim); color: var(--success); }
+    .badge-danger { background: var(--danger-dim); color: var(--danger); }
+    .badge-accent { background: var(--accent-dim); color: var(--accent); }
+    .badge-warning { background: var(--warning-dim); color: var(--warning); }
+
+    /* ── URL Tester ── */
+    .tester-form { background: var(--surface); border: 1px solid var(--border); border-radius: var(--r); padding: 22px; margin-bottom: 16px; }
+    .tester-desc { font-size: 13px; color: var(--text-muted); margin-bottom: 14px; }
+    .tester-row { display: flex; gap: 10px; }
+    .tester-input { flex: 1; background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--r-sm); padding: 10px 14px; color: var(--text); font-size: 13.5px; font-family: 'Courier New', monospace; outline: none; transition: border-color var(--t); }
+    .tester-input:focus { border-color: var(--accent); }
+    .tester-input::placeholder { font-family: 'Inter', system-ui, sans-serif; color: var(--text-muted); }
+    .result-panel { background: var(--surface); border: 1px solid var(--border); border-radius: var(--r); padding: 22px; }
+    .result-badge { display: inline-flex; align-items: center; gap: 8px; padding: 6px 14px; border-radius: 20px; font-size: 13px; font-weight: 600; margin-bottom: 14px; }
+    .result-badge.safe { background: var(--success-dim); color: var(--success); border: 1px solid rgba(16,185,129,0.2); }
+    .result-badge.phishing { background: var(--danger-dim); color: var(--danger); border: 1px solid rgba(239,68,68,0.2); }
+    .result-badge.unknown { background: var(--warning-dim); color: var(--warning); border: 1px solid rgba(245,158,11,0.2); }
+    .result-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; }
+    .result-item { background: var(--surface-2); border-radius: var(--r-sm); padding: 10px 14px; }
+    .result-item-label { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 5px; }
+    .result-item-value { font-size: 13.5px; font-weight: 500; color: var(--text); word-break: break-all; }
+
+    /* ── Toasts ── */
+    .toasts { position: fixed; bottom: 20px; right: 20px; display: flex; flex-direction: column; gap: 8px; z-index: 1000; }
+    .toast { display: flex; align-items: center; gap: 10px; padding: 11px 16px; border-radius: var(--r); font-size: 13px; font-weight: 500; box-shadow: 0 4px 24px rgba(0,0,0,0.5); animation: toastIn 0.2s ease; min-width: 220px; max-width: 340px; }
+    .toast.success { background: #0b2218; border: 1px solid rgba(16,185,129,0.25); color: var(--success); }
+    .toast.error { background: #220b0b; border: 1px solid rgba(239,68,68,0.25); color: var(--danger); }
+    .toast.info { background: var(--surface-2); border: 1px solid var(--border); color: var(--text-dim); }
+    @keyframes toastIn { from { opacity: 0; transform: translateX(16px); } to { opacity: 1; transform: translateX(0); } }
+
+    /* ── Auth overlay ── */
+    .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.85); backdrop-filter: blur(6px); display: flex; align-items: center; justify-content: center; z-index: 500; }
+    .modal { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 32px; width: 380px; max-width: calc(100vw - 32px); }
+    .modal-logo { width: 42px; height: 42px; background: var(--accent); border-radius: 12px; display: flex; align-items: center; justify-content: center; margin-bottom: 20px; font-size: 20px; }
+    .modal-title { font-size: 18px; font-weight: 600; margin-bottom: 6px; letter-spacing: -0.3px; }
+    .modal-sub { font-size: 13px; color: var(--text-muted); margin-bottom: 24px; }
+    .form-group { margin-bottom: 16px; }
+    .form-label { display: block; font-size: 11px; font-weight: 600; color: var(--text-muted); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px; }
+    .form-input { width: 100%; background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--r-sm); padding: 10px 14px; color: var(--text); font-size: 14px; font-family: inherit; outline: none; transition: border-color var(--t); }
+    .form-input:focus { border-color: var(--accent); }
+    .error-msg { font-size: 12px; color: var(--danger); margin-top: 6px; min-height: 16px; }
+    .modal-footer { margin-top: 20px; }
+
+    /* ── Skeleton ── */
+    .skeleton { background: linear-gradient(90deg, var(--surface-2) 25%, var(--border) 50%, var(--surface-2) 75%); background-size: 200% 100%; animation: shimmer 1.4s infinite; border-radius: 4px; height: 14px; }
+    @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+
+    /* ── Empty state ── */
+    .empty { text-align: center; padding: 48px 20px; color: var(--text-muted); }
+    .empty-icon { font-size: 28px; margin-bottom: 10px; opacity: 0.4; }
+    .empty-text { font-size: 13.5px; }
+
+    /* ── Spinner ── */
+    .spinner { width: 14px; height: 14px; border: 2px solid rgba(255,255,255,0.2); border-top-color: currentColor; border-radius: 50%; animation: spin 0.7s linear infinite; display: inline-block; flex-shrink: 0; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+
+<div class="layout">
+  <!-- Sidebar -->
+  <nav class="sidebar">
+    <div class="logo">
+      <div class="logo-icon">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5"><path d="M12 2L3 7v5c0 5 4 9.27 9 10 5-0.73 9-5 9-10V7z"/></svg>
+      </div>
+      АнтиФиш
+    </div>
+    <div class="nav">
+      <div class="nav-item active" data-section="dashboard" onclick="navigate('dashboard')">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/>
+          <rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/>
+        </svg>
+        Dashboard
+      </div>
+      <div class="nav-item" data-section="blacklist" onclick="navigate('blacklist')">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="9"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/>
+        </svg>
+        Blacklist
+      </div>
+      <div class="nav-item" data-section="whitelist" onclick="navigate('whitelist')">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M12 2L3 7v5c0 5 4 9.27 9 10 5-0.73 9-5 9-10V7z"/><polyline points="9 12 11 14 15 10"/>
+        </svg>
+        Whitelist
+      </div>
+      <div class="nav-item" data-section="tester" onclick="navigate('tester')">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="11" cy="11" r="7"/><path d="m21 21-4.35-4.35"/>
+        </svg>
+        URL Tester
+      </div>
+    </div>
+  </nav>
+
+  <!-- Header -->
+  <header class="header">
+    <div class="header-title" id="headerTitle">Dashboard</div>
+    <div class="status-pill">
+      <div class="dot" id="statusDot"></div>
+      <span id="statusText">Connecting…</span>
+    </div>
+  </header>
+
+  <!-- Main -->
+  <main class="main">
+
+    <!-- ── Dashboard ── -->
+    <section class="section active" id="section-dashboard">
+      <div class="page-title">Overview</div>
+      <div class="cards">
+        <div class="card">
+          <div class="card-label">Blacklist</div>
+          <div class="card-value danger" id="stat-bl">—</div>
+          <div class="card-sub">phishing domains</div>
+        </div>
+        <div class="card">
+          <div class="card-label">Whitelist</div>
+          <div class="card-value success" id="stat-wl">—</div>
+          <div class="card-sub">trusted domains</div>
+        </div>
+        <div class="card">
+          <div class="card-label">Cache</div>
+          <div class="card-value accent" id="stat-cache">—</div>
+          <div class="card-sub">cached entries</div>
+        </div>
+        <div class="card">
+          <div class="card-label">ML Model</div>
+          <div id="stat-model">—</div>
+          <div class="card-sub">detection engine</div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-header">
+          <div class="panel-title">Server Status</div>
+          <button class="btn btn-ghost" onclick="refreshDashboard()">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/>
+              <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/>
+            </svg>
+            Refresh
+          </button>
+          <button class="btn btn-danger btn-sm" onclick="clearCache()">Clear Cache</button>
+        </div>
+        <div style="padding: 2px 20px 6px;" id="server-info">
+          <div class="skeleton" style="margin: 14px 0; width: 100%;"></div>
+          <div class="skeleton" style="margin: 14px 0; width: 80%;"></div>
+          <div class="skeleton" style="margin: 14px 0; width: 65%;"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── Blacklist ── -->
+    <section class="section" id="section-blacklist">
+      <div class="page-title">Blacklist Management</div>
+      <div class="panel">
+        <div class="panel-header">
+          <div class="panel-title">Phishing Domains <span id="bl-count" class="badge badge-danger" style="margin-left:8px">0</span></div>
+          <input class="search-input" type="text" placeholder="Search domains…" id="bl-search" oninput="filterList('bl')">
+          <select class="select" id="bl-perpage" onchange="changePerPage('bl')">
+            <option value="25">25 / page</option>
+            <option value="50">50 / page</option>
+            <option value="100">100 / page</option>
+          </select>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>#</th><th>Domain</th><th style="text-align:right; width:90px">Action</th></tr></thead>
+            <tbody id="bl-tbody"></tbody>
+          </table>
+        </div>
+        <div class="pagination">
+          <span id="bl-info" style="color:var(--text-muted); font-size:12.5px;"></span>
+          <div class="pagination-pages" id="bl-pages"></div>
+        </div>
+        <div class="add-form">
+          <input class="add-input" type="text" placeholder="domain.com or https://domain.com" id="bl-input" onkeydown="if(event.key==='Enter') addToList('bl')">
+          <button class="btn btn-danger" onclick="addToList('bl')">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14m-7-7h14"/></svg>
+            Add to Blacklist
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── Whitelist ── -->
+    <section class="section" id="section-whitelist">
+      <div class="page-title">Whitelist Management</div>
+      <div class="panel">
+        <div class="panel-header">
+          <div class="panel-title">Trusted Domains <span id="wl-count" class="badge badge-success" style="margin-left:8px">0</span></div>
+          <input class="search-input" type="text" placeholder="Search domains…" id="wl-search" oninput="filterList('wl')">
+          <select class="select" id="wl-perpage" onchange="changePerPage('wl')">
+            <option value="25">25 / page</option>
+            <option value="50">50 / page</option>
+            <option value="100">100 / page</option>
+          </select>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>#</th><th>Domain</th><th style="text-align:right; width:90px">Action</th></tr></thead>
+            <tbody id="wl-tbody"></tbody>
+          </table>
+        </div>
+        <div class="pagination">
+          <span id="wl-info" style="color:var(--text-muted); font-size:12.5px;"></span>
+          <div class="pagination-pages" id="wl-pages"></div>
+        </div>
+        <div class="add-form">
+          <input class="add-input" type="text" placeholder="domain.com or https://domain.com" id="wl-input" onkeydown="if(event.key==='Enter') addToList('wl')">
+          <button class="btn btn-success" onclick="addToList('wl')">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14m-7-7h14"/></svg>
+            Add to Whitelist
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── URL Tester ── -->
+    <section class="section" id="section-tester">
+      <div class="page-title">URL Tester</div>
+      <div class="tester-form">
+        <div class="tester-desc">Test a URL against the phishing detection system</div>
+        <div class="tester-row">
+          <input class="tester-input" type="text" id="tester-url" placeholder="https://example.com" onkeydown="if(event.key==='Enter') testUrl()">
+          <select class="select" id="tester-mode" style="padding: 10px 12px;">
+            <option value="fast">Fast check</option>
+            <option value="ai" selected>AI analysis</option>
+          </select>
+          <button class="btn btn-primary" onclick="testUrl()" id="test-btn" style="padding: 10px 18px;">Analyze</button>
+        </div>
+      </div>
+      <div class="result-panel" id="tester-result" style="display:none;"></div>
+    </section>
+
+  </main>
+</div>
+
+<!-- Auth overlay -->
+<div class="overlay" id="auth-overlay" style="display:none;">
+  <div class="modal">
+    <div class="modal-logo">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5"><path d="M12 2L3 7v5c0 5 4 9.27 9 10 5-0.73 9-5 9-10V7z"/></svg>
+    </div>
+    <div class="modal-title">Admin Access</div>
+    <div class="modal-sub">Enter your API key to access the admin panel.</div>
+    <div class="form-group">
+      <label class="form-label">API Key</label>
+      <input class="form-input" type="password" id="auth-input" placeholder="Enter API key…" onkeydown="if(event.key==='Enter') submitAuth()">
+      <div class="error-msg" id="auth-error"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-primary" style="width:100%; justify-content:center;" onclick="submitAuth()">Connect</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toasts -->
+<div class="toasts" id="toasts"></div>
+
+<script>
+// ── State ──────────────────────────────────────────────────────────────────────
+const S = {
+  key: localStorage.getItem('_aphk') || '',
+  bl: { data: [], filtered: [], page: 1, pp: 25 },
+  wl: { data: [], filtered: [], page: 1, pp: 25 },
+};
+
+// ── API helper ─────────────────────────────────────────────────────────────────
+async function api(path, opts = {}) {
+  const h = { 'Content-Type': 'application/json' };
+  if (S.key) h['X-API-Key'] = S.key;
+  return fetch(path, { ...opts, headers: { ...h, ...(opts.headers || {}) } });
+}
+
+// ── Auth ───────────────────────────────────────────────────────────────────────
+async function boot() {
+  try {
+    const r = await fetch('/api/v1/auth-check');
+    const d = await r.json();
+    if (!d.required) { initApp(); return; }
+    if (S.key) {
+      const hr = await api('/health');
+      if (hr.ok) { initApp(); return; }
+      S.key = ''; localStorage.removeItem('_aphk');
+    }
+  } catch { setStatus(false, 'Server unreachable'); }
+  document.getElementById('auth-overlay').style.display = 'flex';
+}
+
+async function submitAuth() {
+  const k = document.getElementById('auth-input').value.trim();
+  if (!k) return;
+  S.key = k;
+  try {
+    const r = await api('/health');
+    if (r.ok) {
+      localStorage.setItem('_aphk', k);
+      document.getElementById('auth-overlay').style.display = 'none';
+      document.getElementById('auth-error').textContent = '';
+      initApp();
+    } else {
+      document.getElementById('auth-error').textContent = 'Invalid API key.';
+      S.key = '';
+    }
+  } catch {
+    document.getElementById('auth-error').textContent = 'Cannot reach server.';
+    S.key = '';
+  }
+}
+
+async function initApp() { await refreshDashboard(); }
+
+// ── Navigation ─────────────────────────────────────────────────────────────────
+const NAV_TITLES = { dashboard: 'Dashboard', blacklist: 'Blacklist', whitelist: 'Whitelist', tester: 'URL Tester' };
+
+function navigate(id) {
+  document.querySelectorAll('.nav-item').forEach(e => e.classList.remove('active'));
+  document.querySelectorAll('.section').forEach(e => e.classList.remove('active'));
+  document.querySelector(`[data-section="${id}"]`).classList.add('active');
+  document.getElementById(`section-${id}`).classList.add('active');
+  document.getElementById('headerTitle').textContent = NAV_TITLES[id] || id;
+  if (id === 'blacklist') loadList('bl');
+  if (id === 'whitelist') loadList('wl');
+}
+
+// ── Dashboard ──────────────────────────────────────────────────────────────────
+async function refreshDashboard() {
+  try {
+    const r = await api('/health');
+    if (!r.ok) throw new Error();
+    const d = await r.json();
+    setStatus(true, `v${d.version} · Online`);
+    document.getElementById('stat-bl').textContent = fmt(d.blacklist_size);
+    document.getElementById('stat-wl').textContent = fmt(d.whitelist_size);
+    document.getElementById('stat-cache').textContent = fmt(d.cache_size);
+    document.getElementById('stat-model').innerHTML = d.model_loaded
+      ? '<span class="badge badge-success" style="font-size:13px; padding:3px 10px;">Loaded</span>'
+      : '<span class="badge badge-danger" style="font-size:13px; padding:3px 10px;">Missing</span>';
+
+    const rows = [
+      ['Version', d.version],
+      ['Model', d.model_loaded ? '<span class="badge badge-success">Active</span>' : '<span class="badge badge-danger">Not loaded</span>'],
+      ['Blacklist', fmt(d.blacklist_size) + ' domains'],
+      ['Whitelist', fmt(d.whitelist_size) + ' domains'],
+      ['Cache entries', fmt(d.cache_size)],
+      ['Server time', new Date(d.timestamp * 1000).toLocaleString()],
+    ];
+    document.getElementById('server-info').innerHTML = rows.map(([l, v]) =>
+      `<div class="info-row"><span class="info-label">${l}</span><span class="info-value">${v}</span></div>`
+    ).join('');
+  } catch {
+    setStatus(false, 'Offline');
+    document.getElementById('server-info').innerHTML = '<div style="color:var(--danger);font-size:13px;padding:14px 0;">Failed to reach server.</div>';
+  }
+}
+
+// ── Cache ──────────────────────────────────────────────────────────────────────
+async function clearCache() {
+  const r = await api('/api/v1/cache/clear', { method: 'POST' }).catch(() => null);
+  if (r && r.ok) { toast('Cache cleared', 'success'); refreshDashboard(); }
+  else toast('Failed to clear cache', 'error');
+}
+
+// ── List management ────────────────────────────────────────────────────────────
+const LIST_CFG = {
+  bl: { ep: '/api/v1/blacklist', label: 'blacklist' },
+  wl: { ep: '/api/v1/whitelist', label: 'whitelist' },
+};
+
+async function loadList(k) {
+  const tbody = document.getElementById(`${k}-tbody`);
+  tbody.innerHTML = `<tr><td colspan="3"><div class="skeleton" style="margin:14px 0;"></div></td></tr>`;
+  try {
+    const r = await api(LIST_CFG[k].ep);
+    if (!r.ok) throw new Error();
+    const data = await r.json();
+    S[k].data = data; S[k].filtered = data; S[k].page = 1;
+    document.getElementById(`${k}-count`).textContent = fmt(data.length);
+    const q = document.getElementById(`${k}-search`).value;
+    if (q) filterList(k); else renderList(k);
+  } catch {
+    tbody.innerHTML = `<tr><td colspan="3" style="color:var(--danger);padding:18px 20px;">Failed to load ${LIST_CFG[k].label}</td></tr>`;
+  }
+}
+
+function filterList(k) {
+  const q = document.getElementById(`${k}-search`).value.toLowerCase().trim();
+  S[k].filtered = q ? S[k].data.filter(d => d.toLowerCase().includes(q)) : S[k].data;
+  S[k].page = 1;
+  document.getElementById(`${k}-count`).textContent = fmt(S[k].filtered.length);
+  renderList(k);
+}
+
+function changePerPage(k) {
+  S[k].pp = parseInt(document.getElementById(`${k}-perpage`).value);
+  S[k].page = 1;
+  renderList(k);
+}
+
+function renderList(k) {
+  const { filtered, page, pp } = S[k];
+  const start = (page - 1) * pp, end = start + pp;
+  const rows = filtered.slice(start, end);
+  const tbody = document.getElementById(`${k}-tbody`);
+
+  if (!filtered.length) {
+    tbody.innerHTML = `<tr><td colspan="3"><div class="empty"><div class="empty-icon">📭</div><div class="empty-text">No domains found</div></div></td></tr>`;
+  } else {
+    tbody.innerHTML = rows.map((d, i) => `
+      <tr>
+        <td>${start + i + 1}</td>
+        <td>${esc(d)}</td>
+        <td style="text-align:right"><button class="btn btn-danger btn-sm" onclick="removeFromList('${k}','${escA(d)}')">Remove</button></td>
+      </tr>`).join('');
+  }
+
+  const total = filtered.length, totalPages = Math.ceil(total / pp);
+  document.getElementById(`${k}-info`).textContent = total
+    ? `${start + 1}–${Math.min(end, total)} of ${fmt(total)}`
+    : 'No results';
+
+  const pEl = document.getElementById(`${k}-pages`);
+  if (totalPages <= 1) { pEl.innerHTML = ''; return; }
+
+  let html = `<button class="page-btn" onclick="goPage('${k}',${page-1})" ${page===1?'disabled':''}>‹</button>`;
+  const range = pageRange(page, totalPages);
+  let prev = null;
+  for (const p of range) {
+    if (prev !== null && p - prev > 1) html += `<button class="page-btn" disabled>…</button>`;
+    html += `<button class="page-btn ${p===page?'active':''}" onclick="goPage('${k}',${p})">${p}</button>`;
+    prev = p;
+  }
+  html += `<button class="page-btn" onclick="goPage('${k}',${page+1})" ${page===totalPages?'disabled':''}>›</button>`;
+  pEl.innerHTML = html;
+}
+
+function pageRange(cur, total) {
+  if (total <= 7) return Array.from({length: total}, (_, i) => i + 1);
+  const s = new Set([1, total]);
+  for (let i = Math.max(2, cur-2); i <= Math.min(total-1, cur+2); i++) s.add(i);
+  return Array.from(s).sort((a,b) => a-b);
+}
+
+function goPage(k, p) {
+  const max = Math.ceil(S[k].filtered.length / S[k].pp);
+  if (p < 1 || p > max) return;
+  S[k].page = p; renderList(k);
+}
+
+async function addToList(k) {
+  const inp = document.getElementById(`${k}-input`);
+  const val = inp.value.trim();
+  if (!val) return;
+  const r = await api(LIST_CFG[k].ep, { method: 'POST', body: JSON.stringify({ link: val }) }).catch(() => null);
+  if (r && r.ok) { toast(`Added to ${LIST_CFG[k].label}`, 'success'); inp.value = ''; loadList(k); refreshDashboard(); }
+  else { const d = r ? await r.json().catch(() => ({})) : {}; toast(d.error || 'Failed to add', 'error'); }
+}
+
+async function removeFromList(k, domain) {
+  const r = await api(LIST_CFG[k].ep, { method: 'DELETE', body: JSON.stringify({ link: domain }) }).catch(() => null);
+  if (r && r.ok) { toast(`Removed from ${LIST_CFG[k].label}`, 'success'); loadList(k); refreshDashboard(); }
+  else toast('Failed to remove', 'error');
+}
+
+// ── URL Tester ─────────────────────────────────────────────────────────────────
+async function testUrl() {
+  const url = document.getElementById('tester-url').value.trim();
+  if (!url) return;
+  const mode = document.getElementById('tester-mode').value;
+  const btn = document.getElementById('test-btn');
+  const result = document.getElementById('tester-result');
+
+  btn.innerHTML = '<span class="spinner"></span> Analyzing…';
+  btn.disabled = true;
+  result.style.display = 'none';
+
+  try {
+    const r = await api(mode === 'fast' ? '/api/v1/fast' : '/api/v1/ai', {
+      method: 'POST', body: JSON.stringify({ link: url })
+    });
+    const d = await r.json();
+
+    if (!r.ok) {
+      result.style.display = 'block';
+      result.innerHTML = `<div style="color:var(--danger);font-size:13px;">${esc(d.error || 'Error')}</div>`;
+      return;
+    }
+
+    const phishing = d.phishing === true, unknown = d.phishing == null;
+    const cls = unknown ? 'unknown' : phishing ? 'phishing' : 'safe';
+    const label = unknown ? 'Unknown / Not in lists' : phishing ? 'Phishing Detected' : 'Safe';
+    const icon = unknown ? '⚠️' : phishing ? '🚨' : '✅';
+
+    const items = [['URL', url], ['Source', d.source || '—'], ['Verdict', label]];
+    if (d.chance != null) items.push(['Risk score', (d.chance * 100).toFixed(1) + '%']);
+    if (d.cached != null) items.push(['Cached', d.cached ? 'Yes' : 'No']);
+
+    result.style.display = 'block';
+    result.innerHTML = `
+      <div class="result-badge ${cls}">${icon} ${label}</div>
+      <div class="result-grid">
+        ${items.map(([l, v]) => `
+          <div class="result-item">
+            <div class="result-item-label">${l}</div>
+            <div class="result-item-value" style="font-size:${l==='URL'?'12px':'13.5px'}">${esc(String(v))}</div>
+          </div>`).join('')}
+      </div>`;
+  } catch {
+    result.style.display = 'block';
+    result.innerHTML = `<div style="color:var(--danger);font-size:13px;">Failed to reach server.</div>`;
+  } finally {
+    btn.innerHTML = 'Analyze';
+    btn.disabled = false;
+  }
+}
+
+// ── Helpers ────────────────────────────────────────────────────────────────────
+function setStatus(online, text) {
+  document.getElementById('statusDot').className = 'dot ' + (online ? 'online' : 'offline');
+  document.getElementById('statusText').textContent = text;
+}
+
+function toast(msg, type = 'info') {
+  const el = document.createElement('div');
+  el.className = `toast ${type}`;
+  el.textContent = msg;
+  document.getElementById('toasts').appendChild(el);
+  setTimeout(() => { el.style.transition = 'opacity 0.3s'; el.style.opacity = '0'; setTimeout(() => el.remove(), 300); }, 3000);
+}
+
+function fmt(n) { return n != null ? n.toLocaleString() : '—'; }
+function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function escA(s) { return String(s).replace(/\\/g,'\\\\').replace(/'/g,"\\'"); }
+
+// ── Boot ───────────────────────────────────────────────────────────────────────
+boot();
+</script>
+</body>
+</html>

@@ -9,7 +9,7 @@ from collections import defaultdict
 from threading import Lock
 from warnings import filterwarnings
 
-from flask import Flask, jsonify, request, g
+from flask import Flask, jsonify, request, g, render_template
 from waitress import serve
 
 from config import Config
@@ -150,11 +150,18 @@ def after_request(response):
     return _add_cors_headers(response)
 
 
+_PUBLIC_PATHS = {"/admin", "/api/v1/auth-check"}
+
+
 @app.before_request
 def before_request():
     # Preflight-запросы пропускаем без проверок
     if request.method == "OPTIONS":
         return jsonify({}), 200
+
+    # Публичные маршруты (панель администратора и проверка авторизации)
+    if request.path in _PUBLIC_PATHS:
+        return
 
     # ── Rate limiting ──
     client_ip = request.headers.get("X-Forwarded-For", request.remote_addr) or "unknown"
@@ -319,7 +326,7 @@ def check_ai_content():
         return jsonify({"error": "Внутренняя ошибка сервера."}), 500
 
 
-@app.route("/api/v1/blacklist", methods=["GET", "POST", "OPTIONS"])
+@app.route("/api/v1/blacklist", methods=["GET", "POST", "DELETE", "OPTIONS"])
 def manage_blacklist():
     if request.method == "GET":
         return jsonify(sorted(black_list))
@@ -328,6 +335,14 @@ def manage_blacklist():
         link = (data.get("link") or "").strip()
         if not link:
             return jsonify({"error": "Поле 'link' обязательно."}), 400
+        if request.method == "DELETE":
+            remove_from_black_list(link)
+            save_black_list(black_list)
+            url_cache.delete(f"fast:{link}")
+            url_cache.delete(f"ai:{link}")
+            url_cache.delete(f"ai-content:{link}")
+            logger.info("Удалён из чёрного списка: %s", link)
+            return jsonify({"success": True})
         add_to_black_list(link)
         save_black_list(black_list)
         if link in white_list:
@@ -339,11 +354,11 @@ def manage_blacklist():
         logger.info("Добавлен в чёрный список: %s", link)
         return jsonify({"success": True})
     except Exception as exc:
-        logger.exception("Ошибка /blacklist POST: %s", exc)
+        logger.exception("Ошибка /blacklist: %s", exc)
         return jsonify({"error": "Внутренняя ошибка сервера."}), 500
 
 
-@app.route("/api/v1/whitelist", methods=["GET", "POST", "OPTIONS"])
+@app.route("/api/v1/whitelist", methods=["GET", "POST", "DELETE", "OPTIONS"])
 def manage_whitelist():
     if request.method == "GET":
         return jsonify(sorted(white_list))
@@ -352,6 +367,14 @@ def manage_whitelist():
         link = (data.get("link") or "").strip()
         if not link:
             return jsonify({"error": "Поле 'link' обязательно."}), 400
+        if request.method == "DELETE":
+            remove_from_white_list(link)
+            save_white_list(white_list)
+            url_cache.delete(f"fast:{link}")
+            url_cache.delete(f"ai:{link}")
+            url_cache.delete(f"ai-content:{link}")
+            logger.info("Удалён из белого списка: %s", link)
+            return jsonify({"success": True})
         add_to_white_list(link)
         save_white_list(white_list)
         if link in black_list:
@@ -363,8 +386,30 @@ def manage_whitelist():
         logger.info("Добавлен в белый список: %s", link)
         return jsonify({"success": True})
     except Exception as exc:
-        logger.exception("Ошибка /whitelist POST: %s", exc)
+        logger.exception("Ошибка /whitelist: %s", exc)
         return jsonify({"error": "Внутренняя ошибка сервера."}), 500
+
+
+@app.route("/api/v1/cache/clear", methods=["POST", "OPTIONS"])
+def clear_cache():
+    try:
+        with url_cache._lock:
+            url_cache._store.clear()
+        logger.info("Кэш очищен администратором")
+        return jsonify({"success": True})
+    except Exception as exc:
+        logger.exception("Ошибка очистки кэша: %s", exc)
+        return jsonify({"error": "Внутренняя ошибка сервера."}), 500
+
+
+@app.route("/api/v1/auth-check", methods=["GET"])
+def auth_check():
+    return jsonify({"required": bool(Config.API_KEY)})
+
+
+@app.route("/admin")
+def admin_panel():
+    return render_template("admin.html")
 
 
 # ── Запуск ─────────────────────────────────────────────────────────────────────
