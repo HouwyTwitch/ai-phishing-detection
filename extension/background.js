@@ -390,6 +390,11 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
             sendResponse({ success: true, settings });
             return true;
 
+        case 'PLAN_CHANGED':
+            settings.plan = request.plan || 'free';
+            sendResponse({ success: true });
+            return true;
+
         case 'CHECK_LINK': {
             // Мгновенная проверка ссылки из content.js
             checkUrl(request.url, CheckLevel.FAST)
@@ -416,11 +421,49 @@ setInterval(() => {
     }
 }, 5 * 60 * 1000);
 
+// ── Проверка лицензии ──────────────────────────────────────────────────────
+async function verifyLicense() {
+    const data = await chrome.storage.sync.get(['licenseKey', 'plan']);
+    const licenseKey = data.licenseKey || '';
+    const currentPlan = data.plan || 'free';
+
+    if (!licenseKey || currentPlan !== 'premium') return;
+
+    try {
+        const headers = { 'Content-Type': 'application/json' };
+        if (settings.apiKey) headers['X-API-Key'] = settings.apiKey;
+        const res = await fetch(`${getApiBase()}/license/verify`, {
+            method: 'POST',
+            headers,
+            body: JSON.stringify({ key: licenseKey }),
+            signal: AbortSignal.timeout(10000),
+        });
+        if (!res.ok) return;
+        const result = await res.json();
+
+        if (!result.valid) {
+            // Лицензия истекла или недействительна — понижаем до бесплатной
+            await chrome.storage.sync.set({ plan: 'free' });
+            settings.plan = 'free';
+            console.warn('АнтиФиш: лицензия истекла или недействительна, переход на бесплатную версию');
+            chrome.tabs.create({
+                url: chrome.runtime.getURL('license-expired.html') +
+                     `?key=${encodeURIComponent(licenseKey)}`,
+            });
+        } else {
+            settings.plan = result.plan || 'premium';
+        }
+    } catch (err) {
+        console.warn('АнтиФиш: не удалось проверить лицензию:', err.message);
+    }
+}
+
 // ── Запуск ─────────────────────────────────────────────────────────────────
 (async () => {
     await loadSettings();
     await loadInitialStats();
     console.log('АнтиФиш v1.1.0 запущен | API:', getApiBase(), '| план:', settings.plan);
+    await verifyLicense();
 })();
 
 // ── Экспорт для тестов ─────────────────────────────────────────────────────

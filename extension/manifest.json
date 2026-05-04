@@ -50,6 +50,7 @@
       "resources": [
         "blocked.html",
         "blocked.js",
+        "license-expired.html",
         "popup/*",
         "settings/*",
         "icons/*"
