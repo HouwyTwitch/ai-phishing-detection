@@ -4,8 +4,11 @@
 """
 import os
 from pathlib import Path
+from dotenv import load_dotenv
 
 BASE_DIR = Path(__file__).parent
+
+load_dotenv(BASE_DIR / ".env")
 
 
 class Config:
@@ -46,6 +49,8 @@ class Config:
     BLACKLIST_PATH: Path = ASSETS_DIR / "phishing_domains.txt"
     WHITELIST_PATH: Path = ASSETS_DIR / "trusted_websites.txt"
     KEYWORDS_PATH: Path = ASSETS_DIR / "phishing_keywords.txt"
+    API_KEYS_PATH: Path = ASSETS_DIR / "api_keys.json"
+    LICENSE_KEYS_PATH: Path = ASSETS_DIR / "license_keys.json"
     LOG_DIR: Path = BASE_DIR / "logs"
 
     # ── Логирование ────────────────────────────────────────────────────────
