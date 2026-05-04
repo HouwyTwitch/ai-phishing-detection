@@ -29,27 +29,25 @@
       --text-dim: #94a3b8;
       --sidebar-w: 216px;
       --header-h: 58px;
-      --r: 10px;
-      --r-sm: 6px;
-      --t: 0.15s ease;
+      --r: 10px; --r-sm: 6px; --t: 0.15s ease;
     }
 
-    html, body { height: 100%; background: var(--bg); color: var(--text); font-family: 'Inter', system-ui, -apple-system, sans-serif; font-size: 14px; line-height: 1.5; }
+    html, body { height: 100%; background: var(--bg); color: var(--text); font-family: 'Inter', system-ui, sans-serif; font-size: 14px; line-height: 1.5; }
 
-    /* ── Layout ── */
     .layout { display: grid; grid-template-columns: var(--sidebar-w) 1fr; grid-template-rows: var(--header-h) 1fr; height: 100vh; }
 
-    /* ── Sidebar ── */
-    .sidebar { grid-row: 1 / 3; background: var(--surface); border-right: 1px solid var(--border); display: flex; flex-direction: column; padding: 0 10px; }
-    .logo { height: var(--header-h); display: flex; align-items: center; gap: 10px; padding: 0 8px; border-bottom: 1px solid var(--border); font-weight: 600; font-size: 15px; letter-spacing: -0.3px; }
+    /* Sidebar */
+    .sidebar { grid-row: 1/3; background: var(--surface); border-right: 1px solid var(--border); display: flex; flex-direction: column; padding: 0 10px; overflow-y: auto; }
+    .logo { height: var(--header-h); display: flex; align-items: center; gap: 10px; padding: 0 8px; border-bottom: 1px solid var(--border); font-weight: 600; font-size: 15px; letter-spacing: -0.3px; flex-shrink: 0; }
     .logo-icon { width: 28px; height: 28px; background: var(--accent); border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-    .nav { padding: 14px 0; flex: 1; display: flex; flex-direction: column; gap: 2px; }
+    .nav { padding: 12px 0; flex: 1; display: flex; flex-direction: column; gap: 2px; }
+    .nav-sep { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.8px; color: var(--text-muted); padding: 12px 10px 4px; margin-top: 6px; }
     .nav-item { display: flex; align-items: center; gap: 10px; padding: 9px 10px; border-radius: var(--r-sm); cursor: pointer; color: var(--text-muted); font-weight: 500; transition: all var(--t); user-select: none; font-size: 13.5px; }
     .nav-item:hover { background: var(--surface-2); color: var(--text-dim); }
     .nav-item.active { background: var(--accent-dim); color: var(--accent); }
     .nav-icon { width: 17px; height: 17px; flex-shrink: 0; }
 
-    /* ── Header ── */
+    /* Header */
     .header { background: var(--surface); border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; padding: 0 24px; }
     .header-title { font-size: 15px; font-weight: 600; }
     .status-pill { display: inline-flex; align-items: center; gap: 7px; font-size: 12.5px; color: var(--text-dim); background: var(--surface-2); border: 1px solid var(--border); border-radius: 20px; padding: 4px 12px; }
@@ -57,37 +55,35 @@
     .dot.online { background: var(--success); box-shadow: 0 0 6px rgba(16,185,129,0.6); }
     .dot.offline { background: var(--danger); }
 
-    /* ── Main ── */
-    .main { overflow-y: auto; padding: 24px; background: var(--bg); }
+    /* Main */
+    .main { overflow-y: auto; padding: 24px; }
     .section { display: none; }
     .section.active { display: block; }
     .page-title { font-size: 20px; font-weight: 600; margin-bottom: 20px; letter-spacing: -0.4px; }
 
-    /* ── Stat cards ── */
-    .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 14px; margin-bottom: 20px; }
+    /* Cards */
+    .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 14px; margin-bottom: 20px; }
     .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--r); padding: 18px 20px; }
     .card-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.6px; color: var(--text-muted); margin-bottom: 10px; }
     .card-value { font-size: 28px; font-weight: 600; letter-spacing: -1px; }
-    .card-value.accent { color: var(--accent); }
-    .card-value.success { color: var(--success); }
-    .card-value.danger { color: var(--danger); }
+    .card-value.accent { color: var(--accent); } .card-value.success { color: var(--success); } .card-value.danger { color: var(--danger); }
     .card-sub { font-size: 12px; color: var(--text-muted); margin-top: 3px; }
 
-    /* ── Panel ── */
-    .panel { background: var(--surface); border: 1px solid var(--border); border-radius: var(--r); overflow: hidden; }
+    /* Panel */
+    .panel { background: var(--surface); border: 1px solid var(--border); border-radius: var(--r); overflow: hidden; margin-bottom: 16px; }
     .panel-header { padding: 14px 20px; display: flex; align-items: center; gap: 10px; border-bottom: 1px solid var(--border); flex-wrap: wrap; }
     .panel-title { font-size: 14px; font-weight: 600; flex: 1; min-width: 100px; }
 
-    /* ── Inputs ── */
-    .search-input { background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--r-sm); padding: 7px 12px; color: var(--text); font-size: 13px; font-family: inherit; outline: none; width: 210px; transition: border-color var(--t); }
-    .search-input:focus { border-color: var(--accent); }
-    .search-input::placeholder { color: var(--text-muted); }
+    /* Inputs */
+    .search-input { background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--r-sm); padding: 7px 12px; color: var(--text); font-size: 13px; font-family: inherit; outline: none; width: 200px; transition: border-color var(--t); }
+    .search-input:focus, .add-input:focus, .form-input:focus, .tester-input:focus { border-color: var(--accent); }
+    .search-input::placeholder, .add-input::placeholder, .tester-input::placeholder { color: var(--text-muted); }
     .select { background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--r-sm); padding: 7px 10px; color: var(--text); font-size: 13px; font-family: inherit; outline: none; cursor: pointer; }
     .add-input { flex: 1; background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--r-sm); padding: 8px 12px; color: var(--text); font-size: 13px; font-family: 'Courier New', monospace; outline: none; transition: border-color var(--t); }
-    .add-input:focus { border-color: var(--accent); }
-    .add-input::placeholder { font-family: 'Inter', system-ui, sans-serif; color: var(--text-muted); }
+    .add-input::placeholder { font-family: 'Inter', system-ui, sans-serif; }
+    .form-input { width: 100%; background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--r-sm); padding: 10px 14px; color: var(--text); font-size: 14px; font-family: inherit; outline: none; transition: border-color var(--t); }
 
-    /* ── Buttons ── */
+    /* Buttons */
     .btn { display: inline-flex; align-items: center; gap: 6px; padding: 7px 14px; border-radius: var(--r-sm); font-size: 13px; font-weight: 500; font-family: inherit; cursor: pointer; border: none; transition: all var(--t); white-space: nowrap; }
     .btn-primary { background: var(--accent); color: #fff; }
     .btn-primary:hover { background: var(--accent-hover); }
@@ -98,23 +94,23 @@
     .btn-success { background: var(--success-dim); color: var(--success); border: 1px solid transparent; }
     .btn-success:hover:not(:disabled) { background: var(--success); color: #fff; }
     .btn-sm { padding: 4px 10px; font-size: 12px; }
-    .btn:disabled { opacity: 0.5; cursor: default; }
+    .btn:disabled { opacity: 0.45; cursor: default; }
 
-    /* ── Table ── */
+    /* Table */
     .table-wrap { overflow-x: auto; }
     table { width: 100%; border-collapse: collapse; }
     thead th { padding: 9px 20px; text-align: left; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); background: var(--surface-2); border-bottom: 1px solid var(--border); }
     tbody tr { border-bottom: 1px solid var(--border); transition: background var(--t); }
     tbody tr:last-child { border-bottom: none; }
-    tbody tr:hover { background: rgba(255,255,255,0.02); }
-    tbody td { padding: 9px 20px; font-size: 13px; color: var(--text-dim); }
-    tbody td:first-child { color: var(--text-muted); font-size: 12px; width: 50px; }
-    tbody td:nth-child(2) { font-family: 'Courier New', monospace; font-size: 12.5px; color: var(--text); }
+    tbody tr:hover { background: rgba(255,255,255,0.018); }
+    tbody td { padding: 9px 20px; font-size: 13px; color: var(--text-dim); vertical-align: middle; }
+    tbody td:first-child { color: var(--text-muted); font-size: 12px; width: 46px; }
+    .mono { font-family: 'Courier New', monospace; font-size: 12.5px; color: var(--text); }
 
-    /* ── Add form ── */
-    .add-form { display: flex; gap: 10px; padding: 14px 20px; border-top: 1px solid var(--border); background: rgba(0,0,0,0.2); }
+    /* Add form */
+    .add-form { display: flex; gap: 10px; padding: 14px 20px; border-top: 1px solid var(--border); background: rgba(0,0,0,0.15); flex-wrap: wrap; }
 
-    /* ── Pagination ── */
+    /* Pagination */
     .pagination { display: flex; align-items: center; justify-content: space-between; padding: 11px 20px; border-top: 1px solid var(--border); font-size: 12.5px; color: var(--text-muted); }
     .pagination-pages { display: flex; gap: 3px; }
     .page-btn { width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; border-radius: var(--r-sm); cursor: pointer; border: 1px solid transparent; font-size: 13px; transition: all var(--t); color: var(--text-dim); background: transparent; font-family: inherit; }
@@ -122,69 +118,75 @@
     .page-btn.active { background: var(--accent-dim); color: var(--accent); border-color: rgba(99,102,241,0.3); }
     .page-btn:disabled { opacity: 0.3; cursor: default; }
 
-    /* ── Info rows ── */
+    /* Info rows */
     .info-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--border); font-size: 13px; }
     .info-row:last-child { border-bottom: none; }
     .info-label { color: var(--text-muted); }
     .info-value { color: var(--text); font-weight: 500; }
 
-    /* ── Badges ── */
+    /* Badges */
     .badge { display: inline-flex; align-items: center; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; }
     .badge-success { background: var(--success-dim); color: var(--success); }
     .badge-danger { background: var(--danger-dim); color: var(--danger); }
     .badge-accent { background: var(--accent-dim); color: var(--accent); }
     .badge-warning { background: var(--warning-dim); color: var(--warning); }
+    .badge-muted { background: rgba(100,116,139,0.15); color: var(--text-muted); }
 
-    /* ── URL Tester ── */
+    /* URL Tester */
     .tester-form { background: var(--surface); border: 1px solid var(--border); border-radius: var(--r); padding: 22px; margin-bottom: 16px; }
-    .tester-desc { font-size: 13px; color: var(--text-muted); margin-bottom: 14px; }
-    .tester-row { display: flex; gap: 10px; }
+    .tester-row { display: flex; gap: 10px; margin-top: 12px; }
     .tester-input { flex: 1; background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--r-sm); padding: 10px 14px; color: var(--text); font-size: 13.5px; font-family: 'Courier New', monospace; outline: none; transition: border-color var(--t); }
-    .tester-input:focus { border-color: var(--accent); }
-    .tester-input::placeholder { font-family: 'Inter', system-ui, sans-serif; color: var(--text-muted); }
     .result-panel { background: var(--surface); border: 1px solid var(--border); border-radius: var(--r); padding: 22px; }
     .result-badge { display: inline-flex; align-items: center; gap: 8px; padding: 6px 14px; border-radius: 20px; font-size: 13px; font-weight: 600; margin-bottom: 14px; }
     .result-badge.safe { background: var(--success-dim); color: var(--success); border: 1px solid rgba(16,185,129,0.2); }
     .result-badge.phishing { background: var(--danger-dim); color: var(--danger); border: 1px solid rgba(239,68,68,0.2); }
     .result-badge.unknown { background: var(--warning-dim); color: var(--warning); border: 1px solid rgba(245,158,11,0.2); }
-    .result-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; }
+    .result-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; }
     .result-item { background: var(--surface-2); border-radius: var(--r-sm); padding: 10px 14px; }
     .result-item-label { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 5px; }
-    .result-item-value { font-size: 13.5px; font-weight: 500; color: var(--text); word-break: break-all; }
+    .result-item-value { font-size: 13px; font-weight: 500; color: var(--text); word-break: break-all; }
 
-    /* ── Toasts ── */
-    .toasts { position: fixed; bottom: 20px; right: 20px; display: flex; flex-direction: column; gap: 8px; z-index: 1000; }
-    .toast { display: flex; align-items: center; gap: 10px; padding: 11px 16px; border-radius: var(--r); font-size: 13px; font-weight: 500; box-shadow: 0 4px 24px rgba(0,0,0,0.5); animation: toastIn 0.2s ease; min-width: 220px; max-width: 340px; }
+    /* New key banner */
+    .new-key-banner { background: #0b2218; border: 1px solid rgba(16,185,129,0.25); border-radius: var(--r); padding: 14px 18px; margin-bottom: 16px; display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+    .new-key-banner .key-val { font-family: 'Courier New', monospace; font-size: 13px; color: var(--success); flex: 1; word-break: break-all; }
+    .new-key-banner .label { font-size: 12px; font-weight: 600; color: var(--success); opacity: 0.8; white-space: nowrap; }
+
+    /* Role explain */
+    .role-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px; }
+    .role-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--r); padding: 16px 18px; }
+    .role-card-title { font-weight: 600; font-size: 13.5px; margin-bottom: 6px; display: flex; align-items: center; gap: 8px; }
+    .role-card-desc { font-size: 12.5px; color: var(--text-muted); line-height: 1.6; }
+
+    /* Generate form */
+    .gen-form { display: grid; grid-template-columns: auto auto 1fr auto; gap: 10px; align-items: center; padding: 14px 20px; border-top: 1px solid var(--border); background: rgba(0,0,0,0.15); flex-wrap: wrap; }
+
+    /* Toasts */
+    .toasts { position: fixed; bottom: 20px; right: 20px; display: flex; flex-direction: column; gap: 8px; z-index: 1000; pointer-events: none; }
+    .toast { display: flex; align-items: center; gap: 10px; padding: 11px 16px; border-radius: var(--r); font-size: 13px; font-weight: 500; box-shadow: 0 4px 24px rgba(0,0,0,0.5); animation: toastIn 0.2s ease; min-width: 220px; max-width: 340px; pointer-events: all; }
     .toast.success { background: #0b2218; border: 1px solid rgba(16,185,129,0.25); color: var(--success); }
     .toast.error { background: #220b0b; border: 1px solid rgba(239,68,68,0.25); color: var(--danger); }
     .toast.info { background: var(--surface-2); border: 1px solid var(--border); color: var(--text-dim); }
     @keyframes toastIn { from { opacity: 0; transform: translateX(16px); } to { opacity: 1; transform: translateX(0); } }
 
-    /* ── Auth overlay ── */
+    /* Auth overlay */
     .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.85); backdrop-filter: blur(6px); display: flex; align-items: center; justify-content: center; z-index: 500; }
     .modal { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 32px; width: 380px; max-width: calc(100vw - 32px); }
-    .modal-logo { width: 42px; height: 42px; background: var(--accent); border-radius: 12px; display: flex; align-items: center; justify-content: center; margin-bottom: 20px; font-size: 20px; }
+    .modal-logo { width: 42px; height: 42px; background: var(--accent); border-radius: 12px; display: flex; align-items: center; justify-content: center; margin-bottom: 20px; }
     .modal-title { font-size: 18px; font-weight: 600; margin-bottom: 6px; letter-spacing: -0.3px; }
     .modal-sub { font-size: 13px; color: var(--text-muted); margin-bottom: 24px; }
-    .form-group { margin-bottom: 16px; }
+    .form-group { margin-bottom: 14px; }
     .form-label { display: block; font-size: 11px; font-weight: 600; color: var(--text-muted); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px; }
-    .form-input { width: 100%; background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--r-sm); padding: 10px 14px; color: var(--text); font-size: 14px; font-family: inherit; outline: none; transition: border-color var(--t); }
-    .form-input:focus { border-color: var(--accent); }
     .error-msg { font-size: 12px; color: var(--danger); margin-top: 6px; min-height: 16px; }
-    .modal-footer { margin-top: 20px; }
 
-    /* ── Skeleton ── */
+    /* Misc */
     .skeleton { background: linear-gradient(90deg, var(--surface-2) 25%, var(--border) 50%, var(--surface-2) 75%); background-size: 200% 100%; animation: shimmer 1.4s infinite; border-radius: 4px; height: 14px; }
     @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
-
-    /* ── Empty state ── */
     .empty { text-align: center; padding: 48px 20px; color: var(--text-muted); }
     .empty-icon { font-size: 28px; margin-bottom: 10px; opacity: 0.4; }
-    .empty-text { font-size: 13.5px; }
-
-    /* ── Spinner ── */
     .spinner { width: 14px; height: 14px; border: 2px solid rgba(255,255,255,0.2); border-top-color: currentColor; border-radius: 50%; animation: spin 0.7s linear infinite; display: inline-block; flex-shrink: 0; }
     @keyframes spin { to { transform: rotate(360deg); } }
+    .copy-btn { background: none; border: none; cursor: pointer; color: var(--text-muted); padding: 2px 4px; border-radius: 3px; transition: color var(--t); font-size: 12px; }
+    .copy-btn:hover { color: var(--text); }
   </style>
 </head>
 <body>
@@ -200,29 +202,30 @@
     </div>
     <div class="nav">
       <div class="nav-item active" data-section="dashboard" onclick="navigate('dashboard')">
-        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/>
-          <rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/>
-        </svg>
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
         Dashboard
       </div>
       <div class="nav-item" data-section="blacklist" onclick="navigate('blacklist')">
-        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <circle cx="12" cy="12" r="9"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/>
-        </svg>
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>
         Blacklist
       </div>
       <div class="nav-item" data-section="whitelist" onclick="navigate('whitelist')">
-        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M12 2L3 7v5c0 5 4 9.27 9 10 5-0.73 9-5 9-10V7z"/><polyline points="9 12 11 14 15 10"/>
-        </svg>
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L3 7v5c0 5 4 9.27 9 10 5-0.73 9-5 9-10V7z"/><polyline points="9 12 11 14 15 10"/></svg>
         Whitelist
       </div>
       <div class="nav-item" data-section="tester" onclick="navigate('tester')">
-        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <circle cx="11" cy="11" r="7"/><path d="m21 21-4.35-4.35"/>
-        </svg>
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.35-4.35"/></svg>
         URL Tester
+      </div>
+
+      <div class="nav-sep" id="admin-sep" style="display:none">Admin</div>
+      <div class="nav-item" data-section="apikeys" data-admin onclick="navigate('apikeys')" style="display:none">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg>
+        API Keys
+      </div>
+      <div class="nav-item" data-section="license" data-admin onclick="navigate('license')" style="display:none">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/><line x1="12" y1="12" x2="12" y2="16"/><line x1="10" y1="14" x2="14" y2="14"/></svg>
+        License Keys
       </div>
     </div>
   </nav>
@@ -239,77 +242,48 @@
   <!-- Main -->
   <main class="main">
 
-    <!-- ── Dashboard ── -->
+    <!-- Dashboard -->
     <section class="section active" id="section-dashboard">
       <div class="page-title">Overview</div>
       <div class="cards">
-        <div class="card">
-          <div class="card-label">Blacklist</div>
-          <div class="card-value danger" id="stat-bl">—</div>
-          <div class="card-sub">phishing domains</div>
-        </div>
-        <div class="card">
-          <div class="card-label">Whitelist</div>
-          <div class="card-value success" id="stat-wl">—</div>
-          <div class="card-sub">trusted domains</div>
-        </div>
-        <div class="card">
-          <div class="card-label">Cache</div>
-          <div class="card-value accent" id="stat-cache">—</div>
-          <div class="card-sub">cached entries</div>
-        </div>
-        <div class="card">
-          <div class="card-label">ML Model</div>
-          <div id="stat-model">—</div>
-          <div class="card-sub">detection engine</div>
-        </div>
+        <div class="card"><div class="card-label">Blacklist</div><div class="card-value danger" id="stat-bl">—</div><div class="card-sub">phishing domains</div></div>
+        <div class="card"><div class="card-label">Whitelist</div><div class="card-value success" id="stat-wl">—</div><div class="card-sub">trusted domains</div></div>
+        <div class="card"><div class="card-label">Cache</div><div class="card-value accent" id="stat-cache">—</div><div class="card-sub">cached entries</div></div>
+        <div class="card"><div class="card-label">ML Model</div><div id="stat-model">—</div><div class="card-sub">detection engine</div></div>
       </div>
-
       <div class="panel">
         <div class="panel-header">
           <div class="panel-title">Server Status</div>
           <button class="btn btn-ghost" onclick="refreshDashboard()">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-              <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/>
-              <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/>
-            </svg>
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></svg>
             Refresh
           </button>
           <button class="btn btn-danger btn-sm" onclick="clearCache()">Clear Cache</button>
         </div>
         <div style="padding: 2px 20px 6px;" id="server-info">
-          <div class="skeleton" style="margin: 14px 0; width: 100%;"></div>
-          <div class="skeleton" style="margin: 14px 0; width: 80%;"></div>
-          <div class="skeleton" style="margin: 14px 0; width: 65%;"></div>
+          <div class="skeleton" style="margin:14px 0;"></div><div class="skeleton" style="margin:14px 0;width:80%;"></div><div class="skeleton" style="margin:14px 0;width:65%;"></div>
         </div>
       </div>
     </section>
 
-    <!-- ── Blacklist ── -->
+    <!-- Blacklist -->
     <section class="section" id="section-blacklist">
       <div class="page-title">Blacklist Management</div>
       <div class="panel">
         <div class="panel-header">
           <div class="panel-title">Phishing Domains <span id="bl-count" class="badge badge-danger" style="margin-left:8px">0</span></div>
-          <input class="search-input" type="text" placeholder="Search domains…" id="bl-search" oninput="filterList('bl')">
+          <input class="search-input" type="text" placeholder="Search…" id="bl-search" oninput="filterList('bl')">
           <select class="select" id="bl-perpage" onchange="changePerPage('bl')">
-            <option value="25">25 / page</option>
-            <option value="50">50 / page</option>
-            <option value="100">100 / page</option>
+            <option value="25">25/page</option><option value="50">50/page</option><option value="100">100/page</option>
           </select>
         </div>
-        <div class="table-wrap">
-          <table>
-            <thead><tr><th>#</th><th>Domain</th><th style="text-align:right; width:90px">Action</th></tr></thead>
-            <tbody id="bl-tbody"></tbody>
-          </table>
-        </div>
-        <div class="pagination">
-          <span id="bl-info" style="color:var(--text-muted); font-size:12.5px;"></span>
-          <div class="pagination-pages" id="bl-pages"></div>
-        </div>
+        <div class="table-wrap"><table>
+          <thead><tr><th>#</th><th>Domain</th><th style="text-align:right;width:90px">Action</th></tr></thead>
+          <tbody id="bl-tbody"></tbody>
+        </table></div>
+        <div class="pagination"><span id="bl-info"></span><div class="pagination-pages" id="bl-pages"></div></div>
         <div class="add-form">
-          <input class="add-input" type="text" placeholder="domain.com or https://domain.com" id="bl-input" onkeydown="if(event.key==='Enter') addToList('bl')">
+          <input class="add-input" type="text" placeholder="domain.com or https://domain.com" id="bl-input" onkeydown="if(event.key==='Enter')addToList('bl')">
           <button class="btn btn-danger" onclick="addToList('bl')">
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14m-7-7h14"/></svg>
             Add to Blacklist
@@ -318,31 +292,24 @@
       </div>
     </section>
 
-    <!-- ── Whitelist ── -->
+    <!-- Whitelist -->
     <section class="section" id="section-whitelist">
       <div class="page-title">Whitelist Management</div>
       <div class="panel">
         <div class="panel-header">
           <div class="panel-title">Trusted Domains <span id="wl-count" class="badge badge-success" style="margin-left:8px">0</span></div>
-          <input class="search-input" type="text" placeholder="Search domains…" id="wl-search" oninput="filterList('wl')">
+          <input class="search-input" type="text" placeholder="Search…" id="wl-search" oninput="filterList('wl')">
           <select class="select" id="wl-perpage" onchange="changePerPage('wl')">
-            <option value="25">25 / page</option>
-            <option value="50">50 / page</option>
-            <option value="100">100 / page</option>
+            <option value="25">25/page</option><option value="50">50/page</option><option value="100">100/page</option>
           </select>
         </div>
-        <div class="table-wrap">
-          <table>
-            <thead><tr><th>#</th><th>Domain</th><th style="text-align:right; width:90px">Action</th></tr></thead>
-            <tbody id="wl-tbody"></tbody>
-          </table>
-        </div>
-        <div class="pagination">
-          <span id="wl-info" style="color:var(--text-muted); font-size:12.5px;"></span>
-          <div class="pagination-pages" id="wl-pages"></div>
-        </div>
+        <div class="table-wrap"><table>
+          <thead><tr><th>#</th><th>Domain</th><th style="text-align:right;width:90px">Action</th></tr></thead>
+          <tbody id="wl-tbody"></tbody>
+        </table></div>
+        <div class="pagination"><span id="wl-info"></span><div class="pagination-pages" id="wl-pages"></div></div>
         <div class="add-form">
-          <input class="add-input" type="text" placeholder="domain.com or https://domain.com" id="wl-input" onkeydown="if(event.key==='Enter') addToList('wl')">
+          <input class="add-input" type="text" placeholder="domain.com or https://domain.com" id="wl-input" onkeydown="if(event.key==='Enter')addToList('wl')">
           <button class="btn btn-success" onclick="addToList('wl')">
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14m-7-7h14"/></svg>
             Add to Whitelist
@@ -351,28 +318,84 @@
       </div>
     </section>
 
-    <!-- ── URL Tester ── -->
+    <!-- URL Tester -->
     <section class="section" id="section-tester">
       <div class="page-title">URL Tester</div>
       <div class="tester-form">
-        <div class="tester-desc">Test a URL against the phishing detection system</div>
+        <div style="font-size:13px;color:var(--text-muted)">Test a URL against the phishing detection system</div>
         <div class="tester-row">
-          <input class="tester-input" type="text" id="tester-url" placeholder="https://example.com" onkeydown="if(event.key==='Enter') testUrl()">
-          <select class="select" id="tester-mode" style="padding: 10px 12px;">
-            <option value="fast">Fast check</option>
-            <option value="ai" selected>AI analysis</option>
+          <input class="tester-input" type="text" id="tester-url" placeholder="https://example.com" onkeydown="if(event.key==='Enter')testUrl()">
+          <select class="select" id="tester-mode" style="padding:10px 12px">
+            <option value="fast">Fast check</option><option value="ai" selected>AI analysis</option>
           </select>
-          <button class="btn btn-primary" onclick="testUrl()" id="test-btn" style="padding: 10px 18px;">Analyze</button>
+          <button class="btn btn-primary" onclick="testUrl()" id="test-btn" style="padding:10px 18px">Analyze</button>
         </div>
       </div>
-      <div class="result-panel" id="tester-result" style="display:none;"></div>
+      <div class="result-panel" id="tester-result" style="display:none"></div>
+    </section>
+
+    <!-- API Keys -->
+    <section class="section" id="section-apikeys">
+      <div class="page-title">API Keys</div>
+      <div class="role-cards">
+        <div class="role-card">
+          <div class="role-card-title"><span class="badge badge-accent">admin</span> Admin key</div>
+          <div class="role-card-desc">Full access: detection, list management, cache, key & license management.</div>
+        </div>
+        <div class="role-card">
+          <div class="role-card-title"><span class="badge badge-muted">user</span> User key</div>
+          <div class="role-card-desc">Detection only: <code style="font-size:11px;color:var(--text-dim)">/fast</code>, <code style="font-size:11px;color:var(--text-dim)">/ai</code>, <code style="font-size:11px;color:var(--text-dim)">/ai-content</code>, license verify.</div>
+        </div>
+      </div>
+      <div id="new-api-key-banner"></div>
+      <div class="panel">
+        <div class="panel-header">
+          <div class="panel-title">Keys <span id="ak-count" class="badge badge-accent" style="margin-left:8px">0</span></div>
+        </div>
+        <div class="table-wrap"><table>
+          <thead><tr><th>#</th><th>Key</th><th>Role</th><th>Name</th><th>Created</th><th style="text-align:right;width:90px">Action</th></tr></thead>
+          <tbody id="ak-tbody"></tbody>
+        </table></div>
+        <div class="add-form" style="gap:10px">
+          <select class="select" id="ak-role"><option value="user">user</option><option value="admin">admin</option></select>
+          <input class="add-input" type="text" placeholder="Name / description (optional)" id="ak-name" onkeydown="if(event.key==='Enter')createApiKey()">
+          <button class="btn btn-primary" onclick="createApiKey()">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14m-7-7h14"/></svg>
+            Generate Key
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- License Keys -->
+    <section class="section" id="section-license">
+      <div class="page-title">License Keys</div>
+      <div id="new-lic-key-banner"></div>
+      <div class="panel">
+        <div class="panel-header">
+          <div class="panel-title">License Keys <span id="lk-count" class="badge badge-accent" style="margin-left:8px">0</span></div>
+        </div>
+        <div class="table-wrap"><table>
+          <thead><tr><th>#</th><th>Key</th><th>Plan</th><th>Expires</th><th>Note</th><th>Created</th><th style="text-align:right;width:90px">Action</th></tr></thead>
+          <tbody id="lk-tbody"></tbody>
+        </table></div>
+        <div class="add-form" style="flex-wrap:wrap">
+          <select class="select" id="lk-plan"><option value="premium">premium</option><option value="free">free</option></select>
+          <input type="date" class="select" id="lk-expires" title="Expiry date (leave empty for lifetime)" style="width:150px">
+          <input class="add-input" type="text" placeholder="Note (customer name, etc.)" id="lk-note" onkeydown="if(event.key==='Enter')generateLicenseKey()">
+          <button class="btn btn-primary" onclick="generateLicenseKey()">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14m-7-7h14"/></svg>
+            Generate License
+          </button>
+        </div>
+      </div>
     </section>
 
   </main>
 </div>
 
 <!-- Auth overlay -->
-<div class="overlay" id="auth-overlay" style="display:none;">
+<div class="overlay" id="auth-overlay" style="display:none">
   <div class="modal">
     <div class="modal-logo">
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5"><path d="M12 2L3 7v5c0 5 4 9.27 9 10 5-0.73 9-5 9-10V7z"/></svg>
@@ -381,31 +404,31 @@
     <div class="modal-sub">Enter your API key to access the admin panel.</div>
     <div class="form-group">
       <label class="form-label">API Key</label>
-      <input class="form-input" type="password" id="auth-input" placeholder="Enter API key…" onkeydown="if(event.key==='Enter') submitAuth()">
+      <input class="form-input" type="password" id="auth-input" placeholder="Enter API key…" onkeydown="if(event.key==='Enter')submitAuth()">
       <div class="error-msg" id="auth-error"></div>
     </div>
-    <div class="modal-footer">
-      <button class="btn btn-primary" style="width:100%; justify-content:center;" onclick="submitAuth()">Connect</button>
-    </div>
+    <button class="btn btn-primary" style="width:100%;justify-content:center;margin-top:8px" onclick="submitAuth()">Connect</button>
   </div>
 </div>
 
-<!-- Toasts -->
 <div class="toasts" id="toasts"></div>
 
 <script>
 // ── State ──────────────────────────────────────────────────────────────────────
 const S = {
   key: localStorage.getItem('_aphk') || '',
+  role: 'user',
   bl: { data: [], filtered: [], page: 1, pp: 25 },
   wl: { data: [], filtered: [], page: 1, pp: 25 },
 };
 
-// ── API helper ─────────────────────────────────────────────────────────────────
+const NAV_TITLES = { dashboard:'Dashboard', blacklist:'Blacklist', whitelist:'Whitelist', tester:'URL Tester', apikeys:'API Keys', license:'License Keys' };
+
+// ── API ────────────────────────────────────────────────────────────────────────
 async function api(path, opts = {}) {
   const h = { 'Content-Type': 'application/json' };
   if (S.key) h['X-API-Key'] = S.key;
-  return fetch(path, { ...opts, headers: { ...h, ...(opts.headers || {}) } });
+  return fetch(path, { ...opts, headers: { ...h, ...(opts.headers||{}) } });
 }
 
 // ── Auth ───────────────────────────────────────────────────────────────────────
@@ -413,14 +436,15 @@ async function boot() {
   try {
     const r = await fetch('/api/v1/auth-check');
     const d = await r.json();
-    if (!d.required) { initApp(); return; }
+    if (!d.required) { await initApp(); return; }
     if (S.key) {
       const hr = await api('/health');
-      if (hr.ok) { initApp(); return; }
+      if (hr.ok) { await initApp(); return; }
       S.key = ''; localStorage.removeItem('_aphk');
     }
   } catch { setStatus(false, 'Server unreachable'); }
   document.getElementById('auth-overlay').style.display = 'flex';
+  setTimeout(() => document.getElementById('auth-input').focus(), 100);
 }
 
 async function submitAuth() {
@@ -433,7 +457,7 @@ async function submitAuth() {
       localStorage.setItem('_aphk', k);
       document.getElementById('auth-overlay').style.display = 'none';
       document.getElementById('auth-error').textContent = '';
-      initApp();
+      await initApp();
     } else {
       document.getElementById('auth-error').textContent = 'Invalid API key.';
       S.key = '';
@@ -444,11 +468,23 @@ async function submitAuth() {
   }
 }
 
-async function initApp() { await refreshDashboard(); }
+async function initApp() {
+  // Determine role
+  try {
+    const r = await api('/api/v1/me');
+    if (r.ok) { const d = await r.json(); S.role = d.role; }
+  } catch {}
+
+  // Show admin-only nav items
+  if (S.role === 'admin') {
+    document.getElementById('admin-sep').style.display = '';
+    document.querySelectorAll('[data-admin]').forEach(e => e.style.display = '');
+  }
+
+  await refreshDashboard();
+}
 
 // ── Navigation ─────────────────────────────────────────────────────────────────
-const NAV_TITLES = { dashboard: 'Dashboard', blacklist: 'Blacklist', whitelist: 'Whitelist', tester: 'URL Tester' };
-
 function navigate(id) {
   document.querySelectorAll('.nav-item').forEach(e => e.classList.remove('active'));
   document.querySelectorAll('.section').forEach(e => e.classList.remove('active'));
@@ -457,6 +493,8 @@ function navigate(id) {
   document.getElementById('headerTitle').textContent = NAV_TITLES[id] || id;
   if (id === 'blacklist') loadList('bl');
   if (id === 'whitelist') loadList('wl');
+  if (id === 'apikeys') loadApiKeys();
+  if (id === 'license') loadLicenseKeys();
 }
 
 // ── Dashboard ──────────────────────────────────────────────────────────────────
@@ -470,34 +508,29 @@ async function refreshDashboard() {
     document.getElementById('stat-wl').textContent = fmt(d.whitelist_size);
     document.getElementById('stat-cache').textContent = fmt(d.cache_size);
     document.getElementById('stat-model').innerHTML = d.model_loaded
-      ? '<span class="badge badge-success" style="font-size:13px; padding:3px 10px;">Loaded</span>'
-      : '<span class="badge badge-danger" style="font-size:13px; padding:3px 10px;">Missing</span>';
-
-    const rows = [
+      ? '<span class="badge badge-success" style="font-size:13px;padding:3px 10px">Loaded</span>'
+      : '<span class="badge badge-danger" style="font-size:13px;padding:3px 10px">Missing</span>';
+    document.getElementById('server-info').innerHTML = [
       ['Version', d.version],
       ['Model', d.model_loaded ? '<span class="badge badge-success">Active</span>' : '<span class="badge badge-danger">Not loaded</span>'],
       ['Blacklist', fmt(d.blacklist_size) + ' domains'],
       ['Whitelist', fmt(d.whitelist_size) + ' domains'],
       ['Cache entries', fmt(d.cache_size)],
       ['Server time', new Date(d.timestamp * 1000).toLocaleString()],
-    ];
-    document.getElementById('server-info').innerHTML = rows.map(([l, v]) =>
-      `<div class="info-row"><span class="info-label">${l}</span><span class="info-value">${v}</span></div>`
-    ).join('');
+    ].map(([l, v]) => `<div class="info-row"><span class="info-label">${l}</span><span class="info-value">${v}</span></div>`).join('');
   } catch {
     setStatus(false, 'Offline');
-    document.getElementById('server-info').innerHTML = '<div style="color:var(--danger);font-size:13px;padding:14px 0;">Failed to reach server.</div>';
+    document.getElementById('server-info').innerHTML = '<div style="color:var(--danger);font-size:13px;padding:14px 0">Failed to reach server.</div>';
   }
 }
 
-// ── Cache ──────────────────────────────────────────────────────────────────────
 async function clearCache() {
   const r = await api('/api/v1/cache/clear', { method: 'POST' }).catch(() => null);
-  if (r && r.ok) { toast('Cache cleared', 'success'); refreshDashboard(); }
+  if (r?.ok) { toast('Cache cleared', 'success'); refreshDashboard(); }
   else toast('Failed to clear cache', 'error');
 }
 
-// ── List management ────────────────────────────────────────────────────────────
+// ── Domain lists ───────────────────────────────────────────────────────────────
 const LIST_CFG = {
   bl: { ep: '/api/v1/blacklist', label: 'blacklist' },
   wl: { ep: '/api/v1/whitelist', label: 'whitelist' },
@@ -505,7 +538,7 @@ const LIST_CFG = {
 
 async function loadList(k) {
   const tbody = document.getElementById(`${k}-tbody`);
-  tbody.innerHTML = `<tr><td colspan="3"><div class="skeleton" style="margin:14px 0;"></div></td></tr>`;
+  tbody.innerHTML = `<tr><td colspan="3"><div class="skeleton" style="margin:14px 0"></div></td></tr>`;
   try {
     const r = await api(LIST_CFG[k].ep);
     if (!r.ok) throw new Error();
@@ -515,7 +548,7 @@ async function loadList(k) {
     const q = document.getElementById(`${k}-search`).value;
     if (q) filterList(k); else renderList(k);
   } catch {
-    tbody.innerHTML = `<tr><td colspan="3" style="color:var(--danger);padding:18px 20px;">Failed to load ${LIST_CFG[k].label}</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="3" style="color:var(--danger);padding:18px 20px">Failed to load</td></tr>`;
   }
 }
 
@@ -529,146 +562,222 @@ function filterList(k) {
 
 function changePerPage(k) {
   S[k].pp = parseInt(document.getElementById(`${k}-perpage`).value);
-  S[k].page = 1;
-  renderList(k);
+  S[k].page = 1; renderList(k);
 }
 
 function renderList(k) {
   const { filtered, page, pp } = S[k];
-  const start = (page - 1) * pp, end = start + pp;
-  const rows = filtered.slice(start, end);
+  const start = (page-1)*pp, end = start+pp;
   const tbody = document.getElementById(`${k}-tbody`);
-
   if (!filtered.length) {
-    tbody.innerHTML = `<tr><td colspan="3"><div class="empty"><div class="empty-icon">📭</div><div class="empty-text">No domains found</div></div></td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="3"><div class="empty"><div class="empty-icon">📭</div><div class="empty-text">No domains</div></div></td></tr>`;
   } else {
-    tbody.innerHTML = rows.map((d, i) => `
-      <tr>
-        <td>${start + i + 1}</td>
-        <td>${esc(d)}</td>
-        <td style="text-align:right"><button class="btn btn-danger btn-sm" onclick="removeFromList('${k}','${escA(d)}')">Remove</button></td>
-      </tr>`).join('');
+    tbody.innerHTML = filtered.slice(start, end).map((d, i) => `
+      <tr><td>${start+i+1}</td><td class="mono">${esc(d)}</td>
+      <td style="text-align:right"><button class="btn btn-danger btn-sm" onclick="removeFromList('${k}','${escA(d)}')">Remove</button></td></tr>`).join('');
   }
-
-  const total = filtered.length, totalPages = Math.ceil(total / pp);
-  document.getElementById(`${k}-info`).textContent = total
-    ? `${start + 1}–${Math.min(end, total)} of ${fmt(total)}`
-    : 'No results';
-
+  const total = filtered.length, tp = Math.ceil(total/pp);
+  document.getElementById(`${k}-info`).textContent = total ? `${start+1}–${Math.min(end,total)} of ${fmt(total)}` : 'No results';
   const pEl = document.getElementById(`${k}-pages`);
-  if (totalPages <= 1) { pEl.innerHTML = ''; return; }
-
+  if (tp <= 1) { pEl.innerHTML=''; return; }
   let html = `<button class="page-btn" onclick="goPage('${k}',${page-1})" ${page===1?'disabled':''}>‹</button>`;
-  const range = pageRange(page, totalPages);
-  let prev = null;
+  const range = pageRange(page, tp); let prev = null;
   for (const p of range) {
-    if (prev !== null && p - prev > 1) html += `<button class="page-btn" disabled>…</button>`;
+    if (prev !== null && p-prev > 1) html += `<button class="page-btn" disabled>…</button>`;
     html += `<button class="page-btn ${p===page?'active':''}" onclick="goPage('${k}',${p})">${p}</button>`;
     prev = p;
   }
-  html += `<button class="page-btn" onclick="goPage('${k}',${page+1})" ${page===totalPages?'disabled':''}>›</button>`;
-  pEl.innerHTML = html;
+  pEl.innerHTML = html + `<button class="page-btn" onclick="goPage('${k}',${page+1})" ${page===tp?'disabled':''}>›</button>`;
 }
 
 function pageRange(cur, total) {
-  if (total <= 7) return Array.from({length: total}, (_, i) => i + 1);
+  if (total <= 7) return Array.from({length:total},(_,i)=>i+1);
   const s = new Set([1, total]);
-  for (let i = Math.max(2, cur-2); i <= Math.min(total-1, cur+2); i++) s.add(i);
-  return Array.from(s).sort((a,b) => a-b);
+  for (let i = Math.max(2,cur-2); i <= Math.min(total-1,cur+2); i++) s.add(i);
+  return Array.from(s).sort((a,b)=>a-b);
 }
 
 function goPage(k, p) {
-  const max = Math.ceil(S[k].filtered.length / S[k].pp);
-  if (p < 1 || p > max) return;
-  S[k].page = p; renderList(k);
+  const max = Math.ceil(S[k].filtered.length/S[k].pp);
+  if (p<1||p>max) return; S[k].page=p; renderList(k);
 }
 
 async function addToList(k) {
   const inp = document.getElementById(`${k}-input`);
-  const val = inp.value.trim();
-  if (!val) return;
-  const r = await api(LIST_CFG[k].ep, { method: 'POST', body: JSON.stringify({ link: val }) }).catch(() => null);
-  if (r && r.ok) { toast(`Added to ${LIST_CFG[k].label}`, 'success'); inp.value = ''; loadList(k); refreshDashboard(); }
-  else { const d = r ? await r.json().catch(() => ({})) : {}; toast(d.error || 'Failed to add', 'error'); }
+  const val = inp.value.trim(); if (!val) return;
+  const r = await api(LIST_CFG[k].ep, { method:'POST', body:JSON.stringify({link:val}) }).catch(()=>null);
+  if (r?.ok) { toast(`Added to ${LIST_CFG[k].label}`, 'success'); inp.value=''; loadList(k); refreshDashboard(); }
+  else { const d = r ? await r.json().catch(()=>({})) : {}; toast(d.error||'Failed to add', 'error'); }
 }
 
 async function removeFromList(k, domain) {
-  const r = await api(LIST_CFG[k].ep, { method: 'DELETE', body: JSON.stringify({ link: domain }) }).catch(() => null);
-  if (r && r.ok) { toast(`Removed from ${LIST_CFG[k].label}`, 'success'); loadList(k); refreshDashboard(); }
+  const r = await api(LIST_CFG[k].ep, { method:'DELETE', body:JSON.stringify({link:domain}) }).catch(()=>null);
+  if (r?.ok) { toast(`Removed from ${LIST_CFG[k].label}`, 'success'); loadList(k); refreshDashboard(); }
   else toast('Failed to remove', 'error');
 }
 
 // ── URL Tester ─────────────────────────────────────────────────────────────────
 async function testUrl() {
-  const url = document.getElementById('tester-url').value.trim();
-  if (!url) return;
+  const url = document.getElementById('tester-url').value.trim(); if (!url) return;
   const mode = document.getElementById('tester-mode').value;
-  const btn = document.getElementById('test-btn');
-  const result = document.getElementById('tester-result');
-
-  btn.innerHTML = '<span class="spinner"></span> Analyzing…';
-  btn.disabled = true;
-  result.style.display = 'none';
-
+  const btn = document.getElementById('test-btn'), result = document.getElementById('tester-result');
+  btn.innerHTML = '<span class="spinner"></span> Analyzing…'; btn.disabled = true; result.style.display = 'none';
   try {
-    const r = await api(mode === 'fast' ? '/api/v1/fast' : '/api/v1/ai', {
-      method: 'POST', body: JSON.stringify({ link: url })
-    });
+    const r = await api(mode==='fast'?'/api/v1/fast':'/api/v1/ai', { method:'POST', body:JSON.stringify({link:url}) });
     const d = await r.json();
+    if (!r.ok) { result.style.display='block'; result.innerHTML=`<div style="color:var(--danger);font-size:13px">${esc(d.error||'Error')}</div>`; return; }
+    const phishing = d.phishing===true, unknown = d.phishing==null;
+    const cls = unknown?'unknown':phishing?'phishing':'safe';
+    const label = unknown?'Unknown / Not in lists':phishing?'Phishing Detected':'Safe';
+    const icon = unknown?'⚠️':phishing?'🚨':'✅';
+    const items = [['URL',url],['Source',d.source||'—'],['Verdict',label]];
+    if (d.chance!=null) items.push(['Risk score',(d.chance*100).toFixed(1)+'%']);
+    if (d.cached!=null) items.push(['Cached',d.cached?'Yes':'No']);
+    result.style.display='block';
+    result.innerHTML=`<div class="result-badge ${cls}">${icon} ${label}</div><div class="result-grid">${
+      items.map(([l,v])=>`<div class="result-item"><div class="result-item-label">${l}</div><div class="result-item-value" style="font-size:${l==='URL'?'12px':'13px'}">${esc(String(v))}</div></div>`).join('')
+    }</div>`;
+  } catch { result.style.display='block'; result.innerHTML=`<div style="color:var(--danger);font-size:13px">Failed to reach server.</div>`; }
+  finally { btn.innerHTML='Analyze'; btn.disabled=false; }
+}
 
-    if (!r.ok) {
-      result.style.display = 'block';
-      result.innerHTML = `<div style="color:var(--danger);font-size:13px;">${esc(d.error || 'Error')}</div>`;
+// ── API Keys ───────────────────────────────────────────────────────────────────
+async function loadApiKeys() {
+  const tbody = document.getElementById('ak-tbody');
+  tbody.innerHTML = `<tr><td colspan="6"><div class="skeleton" style="margin:14px 0"></div></td></tr>`;
+  try {
+    const r = await api('/api/v1/keys');
+    if (!r.ok) throw new Error();
+    const data = await r.json();
+    document.getElementById('ak-count').textContent = data.length;
+    if (!data.length) {
+      tbody.innerHTML = `<tr><td colspan="6"><div class="empty"><div class="empty-icon">🔑</div><div class="empty-text">No API keys yet</div></div></td></tr>`;
       return;
     }
-
-    const phishing = d.phishing === true, unknown = d.phishing == null;
-    const cls = unknown ? 'unknown' : phishing ? 'phishing' : 'safe';
-    const label = unknown ? 'Unknown / Not in lists' : phishing ? 'Phishing Detected' : 'Safe';
-    const icon = unknown ? '⚠️' : phishing ? '🚨' : '✅';
-
-    const items = [['URL', url], ['Source', d.source || '—'], ['Verdict', label]];
-    if (d.chance != null) items.push(['Risk score', (d.chance * 100).toFixed(1) + '%']);
-    if (d.cached != null) items.push(['Cached', d.cached ? 'Yes' : 'No']);
-
-    result.style.display = 'block';
-    result.innerHTML = `
-      <div class="result-badge ${cls}">${icon} ${label}</div>
-      <div class="result-grid">
-        ${items.map(([l, v]) => `
-          <div class="result-item">
-            <div class="result-item-label">${l}</div>
-            <div class="result-item-value" style="font-size:${l==='URL'?'12px':'13.5px'}">${esc(String(v))}</div>
-          </div>`).join('')}
-      </div>`;
+    tbody.innerHTML = data.map((k, i) => `
+      <tr>
+        <td>${i+1}</td>
+        <td><span class="mono" style="font-size:12px">${esc(k.key)}</span>
+          <button class="copy-btn" onclick="copyText('${escA(k.key)}')" title="Copy">⧉</button>
+        </td>
+        <td><span class="badge ${k.role==='admin'?'badge-accent':'badge-muted'}">${k.role}</span></td>
+        <td style="color:var(--text-dim);font-size:13px">${esc(k.name||'—')}</td>
+        <td style="color:var(--text-muted);font-size:12px">${esc(k.created||'')}</td>
+        <td style="text-align:right"><button class="btn btn-danger btn-sm" onclick="revokeApiKey('${escA(k.key)}')">Revoke</button></td>
+      </tr>`).join('');
   } catch {
-    result.style.display = 'block';
-    result.innerHTML = `<div style="color:var(--danger);font-size:13px;">Failed to reach server.</div>`;
-  } finally {
-    btn.innerHTML = 'Analyze';
-    btn.disabled = false;
+    tbody.innerHTML = `<tr><td colspan="6" style="color:var(--danger);padding:18px 20px">Failed to load keys</td></tr>`;
   }
+}
+
+async function createApiKey() {
+  const role = document.getElementById('ak-role').value;
+  const name = document.getElementById('ak-name').value.trim();
+  const r = await api('/api/v1/keys', { method:'POST', body:JSON.stringify({role, name}) }).catch(()=>null);
+  if (!r?.ok) { toast('Failed to create key', 'error'); return; }
+  const d = await r.json();
+  document.getElementById('ak-name').value = '';
+  document.getElementById('new-api-key-banner').innerHTML = `
+    <div class="new-key-banner">
+      <div>
+        <div class="label">✓ New ${d.role} key — copy it now</div>
+        <div class="key-val">${esc(d.key)}</div>
+      </div>
+      <button class="btn btn-success btn-sm" onclick="copyText('${escA(d.key)}')">Copy</button>
+      <button class="btn btn-ghost btn-sm" onclick="this.closest('.new-key-banner').remove()">✕</button>
+    </div>`;
+  toast('API key created', 'success');
+  loadApiKeys();
+}
+
+async function revokeApiKey(key) {
+  const r = await api('/api/v1/keys', { method:'DELETE', body:JSON.stringify({key}) }).catch(()=>null);
+  if (r?.ok) { toast('Key revoked', 'success'); loadApiKeys(); }
+  else toast('Failed to revoke key', 'error');
+}
+
+// ── License Keys ───────────────────────────────────────────────────────────────
+async function loadLicenseKeys() {
+  const tbody = document.getElementById('lk-tbody');
+  tbody.innerHTML = `<tr><td colspan="7"><div class="skeleton" style="margin:14px 0"></div></td></tr>`;
+  try {
+    const r = await api('/api/v1/license');
+    if (!r.ok) throw new Error();
+    const data = await r.json();
+    document.getElementById('lk-count').textContent = data.length;
+    if (!data.length) {
+      tbody.innerHTML = `<tr><td colspan="7"><div class="empty"><div class="empty-icon">📋</div><div class="empty-text">No license keys yet</div></div></td></tr>`;
+      return;
+    }
+    const today = new Date().toISOString().slice(0,10);
+    tbody.innerHTML = data.map((k, i) => {
+      const expired = k.expires && k.expires < today;
+      return `<tr>
+        <td>${i+1}</td>
+        <td><span class="mono" style="font-size:12px">${esc(k.key)}</span>
+          <button class="copy-btn" onclick="copyText('${escA(k.key)}')" title="Copy">⧉</button>
+        </td>
+        <td><span class="badge ${k.plan==='premium'?'badge-accent':'badge-muted'}">${esc(k.plan)}</span></td>
+        <td style="font-size:12.5px;color:${expired?'var(--danger)':'var(--text-dim)'}">${k.expires||'Lifetime'}</td>
+        <td style="color:var(--text-muted);font-size:12.5px">${esc(k.note||'—')}</td>
+        <td style="color:var(--text-muted);font-size:12px">${esc(k.created||'')}</td>
+        <td style="text-align:right"><button class="btn btn-danger btn-sm" onclick="revokeLicenseKey('${escA(k.key)}')">Revoke</button></td>
+      </tr>`;
+    }).join('');
+  } catch {
+    tbody.innerHTML = `<tr><td colspan="7" style="color:var(--danger);padding:18px 20px">Failed to load license keys</td></tr>`;
+  }
+}
+
+async function generateLicenseKey() {
+  const plan = document.getElementById('lk-plan').value;
+  const expires = document.getElementById('lk-expires').value || null;
+  const note = document.getElementById('lk-note').value.trim();
+  const r = await api('/api/v1/license', { method:'POST', body:JSON.stringify({plan, expires, note}) }).catch(()=>null);
+  if (!r?.ok) { toast('Failed to generate license', 'error'); return; }
+  const d = await r.json();
+  document.getElementById('lk-note').value = '';
+  document.getElementById('lk-expires').value = '';
+  document.getElementById('new-lic-key-banner').innerHTML = `
+    <div class="new-key-banner">
+      <div>
+        <div class="label">✓ New ${d.plan} license — copy it now</div>
+        <div class="key-val">${esc(d.key)}</div>
+      </div>
+      <button class="btn btn-success btn-sm" onclick="copyText('${escA(d.key)}')">Copy</button>
+      <button class="btn btn-ghost btn-sm" onclick="this.closest('.new-key-banner').remove()">✕</button>
+    </div>`;
+  toast('License key generated', 'success');
+  loadLicenseKeys();
+}
+
+async function revokeLicenseKey(key) {
+  const r = await api('/api/v1/license', { method:'DELETE', body:JSON.stringify({key}) }).catch(()=>null);
+  if (r?.ok) { toast('License revoked', 'success'); loadLicenseKeys(); }
+  else toast('Failed to revoke license', 'error');
 }
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
 function setStatus(online, text) {
-  document.getElementById('statusDot').className = 'dot ' + (online ? 'online' : 'offline');
+  document.getElementById('statusDot').className = 'dot ' + (online?'online':'offline');
   document.getElementById('statusText').textContent = text;
 }
 
-function toast(msg, type = 'info') {
+function toast(msg, type='info') {
   const el = document.createElement('div');
-  el.className = `toast ${type}`;
-  el.textContent = msg;
+  el.className = `toast ${type}`; el.textContent = msg;
   document.getElementById('toasts').appendChild(el);
-  setTimeout(() => { el.style.transition = 'opacity 0.3s'; el.style.opacity = '0'; setTimeout(() => el.remove(), 300); }, 3000);
+  setTimeout(() => { el.style.transition='opacity 0.3s'; el.style.opacity='0'; setTimeout(()=>el.remove(),300); }, 3000);
+}
+
+function copyText(text) {
+  navigator.clipboard.writeText(text).then(() => toast('Copied!', 'success')).catch(() => toast('Copy failed', 'error'));
 }
 
 function fmt(n) { return n != null ? n.toLocaleString() : '—'; }
 function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 function escA(s) { return String(s).replace(/\\/g,'\\\\').replace(/'/g,"\\'"); }
 
-// ── Boot ───────────────────────────────────────────────────────────────────────
 boot();
 </script>
 </body>

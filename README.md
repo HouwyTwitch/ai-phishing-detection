@@ -16,6 +16,7 @@
 - [Архитектура](#архитектура)
 - [Быстрый старт](#быстрый-старт)
 - [Конфигурация](#конфигурация)
+- [Панель администратора](#панель-администратора)
 - [API-справочник](#api-справочник)
 - [Расширение](#расширение)
 - [Docker](#docker)
@@ -55,15 +56,20 @@ ai-phishing-detection/
 │   └── settings/       # Страница настроек (options_ui)
 │
 ├── server/             # Flask API-сервер
-│   ├── app.py          # Основной API (5 эндпоинтов)
+│   ├── app.py          # Основной API + панель администратора
 │   ├── config.py       # Конфигурация через env-переменные
 │   ├── Dockerfile      # Docker-образ сервера
 │   ├── requirements.txt
-│   ├── assets/         # ML-модель, базы доменов
+│   ├── assets/         # ML-модель, базы доменов, ключи
+│   │   ├── api_keys.json      # API-ключи (создаётся автоматически)
+│   │   └── license_keys.json  # Лицензионные ключи
+│   ├── templates/
+│   │   └── admin.html  # Веб-панель администратора
 │   └── src/
 │       ├── ai/url.py   # ML-детектор (33 признака)
 │       ├── black_list.py
 │       ├── white_list.py
+│       ├── keys.py     # Менеджер API и лицензионных ключей
 │       └── utils.py
 │
 └── docker-compose.yml
@@ -141,21 +147,57 @@ python app.py
 | `ANTIPHISH_HOST` | `0.0.0.0` | Адрес сервера |
 | `ANTIPHISH_PORT` | `8787` | Порт |
 | `ANTIPHISH_DEBUG` | `false` | Режим отладки (только для разработки) |
-| `ANTIPHISH_API_KEY` | *(пусто)* | API-ключ для авторизации |
+| `ANTIPHISH_API_KEY` | *(пусто)* | Начальный admin-ключ (мигрирует в `api_keys.json`) |
 | `ANTIPHISH_THRESHOLD` | `0.65` | Порог вероятности фишинга |
 | `ANTIPHISH_CACHE_TTL` | `600` | Время кэширования (сек) |
 | `ANTIPHISH_RATE_LIMIT` | `120` | Запросов в минуту с одного IP |
 | `ANTIPHISH_LOG_LEVEL` | `INFO` | Уровень логирования |
 
-### Безопасность в продакшне
+### Первоначальный admin-ключ
 
 ```bash
-# Сгенерировать API-ключ
+# Сгенерировать ключ
 python -c "import secrets; print(secrets.token_hex(32))"
 
 # Добавить в server/.env
 ANTIPHISH_API_KEY=сгенерированный_ключ
 ```
+
+При первом запуске ключ автоматически сохраняется в `server/assets/api_keys.json` как admin-ключ.  
+Дальнейшее управление ключами — через панель администратора.
+
+---
+
+## Панель администратора
+
+Веб-интерфейс доступен по адресу **`http://localhost:8787/admin`**.
+
+### Возможности
+
+| Раздел | Описание |
+|---|---|
+| **Dashboard** | Статус сервера, размер баз, кэш, ML-модель; очистка кэша |
+| **Blacklist** | Просмотр, поиск, добавление и удаление фишинговых доменов |
+| **Whitelist** | Просмотр, поиск, добавление и удаление доверенных доменов |
+| **URL Tester** | Ручная проверка URL через быстрый или AI-анализ |
+| **API Keys** | Управление ключами с ролями `admin` и `user` *(только admin)* |
+| **License Keys** | Генерация и отзыв лицензионных ключей `APF-XXXX-XXXX-XXXX` *(только admin)* |
+
+### Роли API-ключей
+
+| Роль | Доступные эндпоинты |
+|---|---|
+| `admin` | Все эндпоинты, включая управление ключами и списками |
+| `user` | `/health`, `/api/v1/fast`, `/api/v1/ai`, `/api/v1/ai-content`, `/api/v1/license/verify` |
+
+### Лицензионные ключи
+
+Лицензионный ключ активирует Премиум-план в расширении. Формат: `APF-XXXX-XXXX`.
+
+- Ключи генерируются в панели администратора (раздел **License Keys**)
+- Поддерживаются планы: `premium`, `free`
+- Можно задать дату истечения или сделать ключ бессрочным
+- Проверка ключа расширением: `POST /api/v1/license/verify`
 
 ---
 
@@ -205,16 +247,66 @@ ML-анализ URL без загрузки страницы.
 { "link": "https://example.com", "content": "<html>...</html>", "threshold": 0.65 }
 ```
 
-### `GET/POST /api/v1/blacklist` и `/api/v1/whitelist`
+### `GET/POST/DELETE /api/v1/blacklist` и `/api/v1/whitelist`
 
-Управление списками.
+Управление списками *(требуется роль `admin`)*.
 
 ```bash
+# Добавить домен
 curl -X POST http://localhost:8787/api/v1/blacklist \
   -H "Content-Type: application/json" \
   -H "X-API-Key: ваш_ключ" \
   -d '{"link": "phishing-example.com"}'
+
+# Удалить домен
+curl -X DELETE http://localhost:8787/api/v1/blacklist \
+  -H "Content-Type: application/json" \
+  -H "X-API-Key: ваш_ключ" \
+  -d '{"link": "phishing-example.com"}'
 ```
+
+### `GET/POST/DELETE /api/v1/keys` *(admin)*
+
+Управление API-ключами.
+
+```bash
+# Создать user-ключ
+curl -X POST http://localhost:8787/api/v1/keys \
+  -H "X-API-Key: admin_ключ" \
+  -H "Content-Type: application/json" \
+  -d '{"role": "user", "name": "Пользователь 1"}'
+
+# Список всех ключей
+curl http://localhost:8787/api/v1/keys -H "X-API-Key: admin_ключ"
+```
+
+### `GET/POST/DELETE /api/v1/license` *(admin)*
+
+Управление лицензионными ключами.
+
+```bash
+# Создать лицензию
+curl -X POST http://localhost:8787/api/v1/license \
+  -H "X-API-Key: admin_ключ" \
+  -H "Content-Type: application/json" \
+  -d '{"plan": "premium", "expires": "2027-01-01", "note": "Клиент Иванов"}'
+```
+
+### `POST /api/v1/license/verify` *(user/admin)*
+
+Проверка лицензионного ключа (используется расширением).
+
+```bash
+curl -X POST http://localhost:8787/api/v1/license/verify \
+  -H "X-API-Key: user_ключ" \
+  -H "Content-Type: application/json" \
+  -d '{"key": "APF-ABCD-EF01-2345"}'
+# → {"valid": true, "plan": "premium", "expires": "2027-01-01"}
+```
+
+### `POST /api/v1/cache/clear` *(admin)*
+
+Очистка кэша URL-проверок.
 
 ---
 
