@@ -146,17 +146,44 @@ async function runConnectionTest() {
 // ── Активация лицензии ─────────────────────────────────────────────────────
 async function activateLicense(key) {
     const status = $('licenseStatus');
-    // Простая проверка формата ключа: ANTIPHISH-XXXX-XXXX-XXXX
-    const valid = /^ANTIPHISH-[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}$/i.test(key.trim());
+    // Формат ключа: APF-XXXX-XXXX-XXXX (4 hex-символа в каждой группе)
+    const valid = /^APF-[A-F0-9]{4}-[A-F0-9]{4}-[A-F0-9]{4}$/i.test(key.trim());
     if (!valid) {
-        status.textContent = '✗ Неверный формат ключа';
+        status.textContent = '✗ Неверный формат ключа (ожидается APF-XXXX-XXXX-XXXX)';
         status.className = 'license-status err';
         return false;
     }
-    // В реальном продукте здесь был бы запрос к серверу лицензирования
-    status.textContent = '✓ Лицензия активирована';
-    status.className = 'license-status ok';
-    return true;
+
+    const url = ($('apiUrl').value || '').trim().replace(/\/$/, '');
+    const apiKey = ($('apiKey').value || '').trim();
+    status.textContent = 'Проверка на сервере…';
+    status.className = 'license-status';
+
+    try {
+        const headers = { 'Content-Type': 'application/json' };
+        if (apiKey) headers['X-API-Key'] = apiKey;
+        const res = await fetch(`${url}/api/v1/license/verify`, {
+            method: 'POST',
+            headers,
+            body: JSON.stringify({ key: key.trim() }),
+            signal: AbortSignal.timeout(8000),
+        });
+        const data = await res.json();
+        if (!res.ok || !data.valid) {
+            status.textContent = '✗ Лицензия недействительна или истёк срок действия';
+            status.className = 'license-status err';
+            return false;
+        }
+        const plan = data.plan || 'premium';
+        const expires = data.expires ? ` (до ${data.expires})` : ' (бессрочная)';
+        status.textContent = `✓ Лицензия активирована · ${plan}${expires}`;
+        status.className = 'license-status ok';
+        return true;
+    } catch (err) {
+        status.textContent = '✗ Не удалось проверить лицензию на сервере';
+        status.className = 'license-status err';
+        return false;
+    }
 }
 
 // ── Статистика ─────────────────────────────────────────────────────────────
